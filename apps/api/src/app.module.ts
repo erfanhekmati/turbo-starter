@@ -5,13 +5,16 @@ import { DatabaseModule } from '@repo/database';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+const packageRoot = join(__dirname, '..');
+const monorepoRoot = join(packageRoot, '..', '..');
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        join(__dirname, '..', '..', '..', '.env'),
-        '.env',
+        join(monorepoRoot, '.env'),
+        join(process.cwd(), '.env'),
       ],
     }),
     DatabaseModule.forRootAsync({
