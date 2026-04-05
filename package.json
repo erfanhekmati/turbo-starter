@@ -2,7 +2,6 @@
   "name": "turbo-starter",
   "private": true,
   "scripts": {
-    "predev": "pnpm --filter @repo/database run build",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
