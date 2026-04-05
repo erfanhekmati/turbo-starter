@@ -1,0 +1,18 @@
+{
+  "name": "turbo-starter",
+  "private": true,
+  "scripts": {
+    "predev": "pnpm --filter @repo/database run build",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "start": "turbo run start"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=18"
+  }
+}
