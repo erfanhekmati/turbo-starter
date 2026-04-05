@@ -1,8 +1,11 @@
-import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import {
   DATABASE_MODULE_OPTIONS,
 } from './database.constants';
-import type { DatabaseModuleOptions } from './database.module-definition';
+import type {
+  DatabaseModuleAsyncOptions,
+  DatabaseModuleOptions,
+} from './database.module-definition';
 import { PrismaService } from './prisma.service';
 
 @Module({})
@@ -20,13 +23,7 @@ export class DatabaseModule {
     };
   }
 
-  static forRootAsync(options: {
-    imports?: Type<unknown>[];
-    inject?: (string | symbol | Type<unknown>)[];
-    useFactory: (
-      ...args: unknown[]
-    ) => Promise<DatabaseModuleOptions> | DatabaseModuleOptions;
-  }): DynamicModule {
+  static forRootAsync(options: DatabaseModuleAsyncOptions): DynamicModule {
     const optionsProvider: Provider = {
       provide: DATABASE_MODULE_OPTIONS,
       useFactory: options.useFactory,
