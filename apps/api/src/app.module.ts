@@ -12,10 +12,7 @@ const monorepoRoot = join(packageRoot, '..', '..');
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [
-        join(monorepoRoot, '.env'),
-        join(process.cwd(), '.env'),
-      ],
+      envFilePath: [join(monorepoRoot, '.env'), join(process.cwd(), '.env')],
     }),
     DatabaseModule.forRootAsync({
       imports: [ConfigModule],
