@@ -1,4 +1,4 @@
-import { WinstonModule } from 'nest-winston';
+import { WinstonModule, utilities as nestWinstonUtilities } from 'nest-winston';
 import * as winston from 'winston';
 
 export function createWinstonLogger(isProduction: boolean) {
@@ -8,9 +8,9 @@ export function createWinstonLogger(isProduction: boolean) {
       ? winston.format.combine(winston.format.timestamp(), winston.format.json())
       : winston.format.combine(
           winston.format.timestamp(),
-          winston.format.colorize(),
-          winston.format.printf(({ timestamp, level, message, context }) => {
-            return `${timestamp} [${context ?? 'Nest'}] ${level}: ${message}`;
+          nestWinstonUtilities.format.nestLike('API', {
+            colors: true,
+            prettyPrint: true,
           }),
         ),
     transports: [new winston.transports.Console()],
