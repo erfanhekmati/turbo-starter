@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { join } from 'node:path';
 import { DatabaseModule } from '@repo/database';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import configuration from './config/configuration';
+import { validate } from './config/env.validation';
 
 const packageRoot = join(__dirname, '..');
 const monorepoRoot = join(packageRoot, '..', '..');
@@ -12,7 +12,8 @@ const monorepoRoot = join(packageRoot, '..', '..');
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: [join(monorepoRoot, '.env'), join(process.cwd(), '.env')],
+      load: [configuration],
+      validate,
     }),
     DatabaseModule.forRootAsync({
       imports: [ConfigModule],
@@ -22,7 +23,6 @@ const monorepoRoot = join(packageRoot, '..', '..');
       }),
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [],
 })
 export class AppModule {}
