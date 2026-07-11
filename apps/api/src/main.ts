@@ -1,12 +1,19 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
+import { createWinstonLogger } from './logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const configService = app.get(ConfigService);
+
+  const isProduction =
+    configService.getOrThrow<string>('app.nodeEnv') === 'production';
+    
+  app.useLogger(createWinstonLogger(isProduction));
+  const logger = new Logger('Bootstrap');
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -22,14 +29,13 @@ async function bootstrap() {
   setupSwagger(app);
 
   const port = configService.getOrThrow<number>('app.port');
-  const isProduction = configService.getOrThrow<string>('app.nodeEnv');
 
   await app.listen(port);
-  console.log(`API running at http://localhost:${port}`);
+  logger.log(`API running at http://localhost:${port}`);
 
-  if(!isProduction) {
+  if (!isProduction) {
     const swaggerPath = configService.get<string>('swagger.path', 'api-docs');
-    console.log(`Swagger docs at http://localhost:${port}/${swaggerPath}`);
+    logger.log(`Swagger docs at http://localhost:${port}/${swaggerPath}`);
   }
 }
 bootstrap();
