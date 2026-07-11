@@ -19,7 +19,7 @@ export function setupSwagger(app: INestApplication<any>) {
     .build();
 
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  
+
   const theme = new SwaggerTheme();
 
   const swaggerOptions = {
@@ -45,7 +45,9 @@ export function setupSwagger(app: INestApplication<any>) {
       },
     },
     explorer: true,
-    customCss: theme.getBuffer(configService.getOrThrow<string>('swagger.theme') as any),
+    customCss: theme.getBuffer(
+      configService.getOrThrow<string>('swagger.theme') as any,
+    ),
   };
 
   SwaggerModule.setup(

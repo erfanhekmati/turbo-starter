@@ -8,5 +8,5 @@ export enum JwtTtl {
   TwelveHours = '12h',
   OneDay = '1d',
   SevenDays = '7d',
-  ThirtyDays = '30d'
+  ThirtyDays = '30d',
 }

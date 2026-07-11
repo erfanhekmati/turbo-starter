@@ -1,2 +1,2 @@
-export * from "./environment.enum";
-export * from "./jwt-ttl.enum";
+export * from './environment.enum';
+export * from './jwt-ttl.enum';

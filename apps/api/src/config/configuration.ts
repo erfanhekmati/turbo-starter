@@ -1,5 +1,5 @@
-import { SwaggerThemeNameEnum } from "swagger-themes";
-import { JwtTtl } from "./enums";
+import { SwaggerThemeNameEnum } from 'swagger-themes';
+import { JwtTtl } from './enums';
 
 export default () => ({
   app: {

@@ -1,5 +1,5 @@
 {
-  "name": "@repo/utils",
+  "name": "@repo/frontend-types",
   "version": "0.0.0",
   "private": true,
   "main": "./dist/index.js",

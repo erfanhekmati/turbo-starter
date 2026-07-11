@@ -11,7 +11,7 @@ async function bootstrap() {
 
   const isProduction =
     configService.getOrThrow<string>('app.nodeEnv') === 'production';
-    
+
   app.useLogger(createWinstonLogger(isProduction));
   const logger = new Logger('Bootstrap');
 

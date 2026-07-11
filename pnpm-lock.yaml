@@ -29,12 +29,12 @@ importers:
       '@nestjs/swagger':
         specifier: ^11.4.5
         version: 11.4.5(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
+      '@repo/backend-utils':
+        specifier: workspace:*
+        version: link:../../packages/server/utils
       '@repo/database':
         specifier: workspace:*
-        version: link:../../packages/database
-      '@repo/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
+        version: link:../../packages/server/database
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -69,15 +69,15 @@ importers:
       '@nestjs/testing':
         specifier: ^11.0.1
         version: 11.1.18(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(@nestjs/platform-express@11.1.18)
+      '@repo/backend-types':
+        specifier: workspace:*
+        version: link:../../packages/server/types
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/eslint-config
-      '@repo/types':
-        specifier: workspace:*
-        version: link:../../packages/types
+        version: link:../../packages/common/eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../packages/typescript-config
+        version: link:../../packages/common/typescript-config
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.6
@@ -123,18 +123,18 @@ importers:
 
   apps/web:
     dependencies:
-      '@repo/types':
+      '@repo/frontend-types':
         specifier: workspace:*
-        version: link:../../packages/types
+        version: link:../../packages/client/types
+      '@repo/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/client/utils
       '@repo/ui':
         specifier: workspace:*
-        version: link:../../packages/ui
-      '@repo/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
+        version: link:../../packages/client/ui
       next:
         specifier: 16.2.2
-        version: 16.2.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.2(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -144,10 +144,10 @@ importers:
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
-        version: link:../../packages/eslint-config
+        version: link:../../packages/common/eslint-config
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../../packages/typescript-config
+        version: link:../../packages/common/typescript-config
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.2.2
@@ -173,7 +173,76 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  packages/database:
+  packages/client/types:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../common/typescript-config
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/client/ui:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../common/typescript-config
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/client/utils:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../common/typescript-config
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/common/eslint-config:
+    dependencies:
+      '@eslint/js':
+        specifier: ^9.18.0
+        version: 9.39.4
+      eslint-config-next:
+        specifier: 16.2.2
+        version: 16.2.2(@typescript-eslint/parser@8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      eslint-config-prettier:
+        specifier: ^10.0.1
+        version: 10.1.8(eslint@9.39.4(jiti@2.6.1))
+      eslint-plugin-prettier:
+        specifier: ^5.2.2
+        version: 5.5.5(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))(prettier@3.8.1)
+      globals:
+        specifier: ^17.0.0
+        version: 17.4.0
+      typescript-eslint:
+        specifier: ^8.20.0
+        version: 8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+    devDependencies:
+      eslint:
+        specifier: ^9.18.0
+        version: 9.39.4(jiti@2.6.1)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/common/typescript-config: {}
+
+  packages/server/database:
     dependencies:
       '@prisma/adapter-pg':
         specifier: ^7.6.0
@@ -213,71 +282,20 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  packages/eslint-config:
-    dependencies:
-      '@eslint/js':
-        specifier: ^9.18.0
-        version: 9.39.4
-      eslint-config-next:
-        specifier: 16.2.2
-        version: 16.2.2(@typescript-eslint/parser@8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
-      eslint-config-prettier:
-        specifier: ^10.0.1
-        version: 10.1.8(eslint@9.39.4(jiti@2.6.1))
-      eslint-plugin-prettier:
-        specifier: ^5.2.2
-        version: 5.5.5(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.4(jiti@2.6.1)))(eslint@9.39.4(jiti@2.6.1))(prettier@3.8.1)
-      globals:
-        specifier: ^17.0.0
-        version: 17.4.0
-      typescript-eslint:
-        specifier: ^8.20.0
-        version: 8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+  packages/server/types:
     devDependencies:
-      eslint:
-        specifier: ^9.18.0
-        version: 9.39.4(jiti@2.6.1)
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../common/typescript-config
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
 
-  packages/types:
+  packages/server/utils:
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
-        version: link:../typescript-config
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/typescript-config: {}
-
-  packages/ui:
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
-      '@types/react':
-        specifier: ^19
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19
-        version: 19.2.3(@types/react@19.2.14)
-      react:
-        specifier: 19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/utils:
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../typescript-config
+        version: link:../../common/typescript-config
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -6169,7 +6187,7 @@ snapshots:
 
   '@types/pg@8.20.0':
     dependencies:
-      '@types/node': 22.19.17
+      '@types/node': 24.12.2
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
@@ -7246,7 +7264,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.58.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.4(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -8656,7 +8674,7 @@ snapshots:
       fast-safe-stringify: 2.1.1
       winston: 3.19.0
 
-  next@16.2.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  next@16.2.2(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@next/env': 16.2.2
       '@swc/helpers': 0.5.15
@@ -8665,7 +8683,7 @@ snapshots:
       postcss: 8.4.31
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      styled-jsx: 5.1.6(react@19.2.4)
+      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.4)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.2.2
       '@next/swc-darwin-x64': 16.2.2
@@ -9416,10 +9434,12 @@ snapshots:
     dependencies:
       '@tokenizer/token': 0.3.0
 
-  styled-jsx@5.1.6(react@19.2.4):
+  styled-jsx@5.1.6(@babel/core@7.29.0)(react@19.2.4):
     dependencies:
       client-only: 0.0.1
       react: 19.2.4
+    optionalDependencies:
+      '@babel/core': 7.29.0
 
   superagent@10.3.0:
     dependencies:

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Button } from "@repo/ui";
-import { toUserId } from "@repo/types";
-import { emptyToUndefined } from "@repo/utils";
+import { toUserId } from "@repo/frontend-types";
+import { emptyToUndefined } from "@repo/frontend-utils";
 
 export default function Home() {
   const demoId = toUserId("demo");
