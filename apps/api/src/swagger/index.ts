@@ -5,7 +5,7 @@ import { SwaggerTheme } from 'swagger-themes';
 
 export function setupSwagger(app: INestApplication<any>) {
   const configService = app.get(ConfigService);
-  
+
   const nodeEnv = configService.getOrThrow<string>('app.nodeEnv');
   if (nodeEnv === 'production') {
     return;

@@ -1,3 +1,4 @@
+import { SwaggerThemeNameEnum } from "swagger-themes";
 import { JwtTtl } from "./enums";
 
 export default () => ({
@@ -20,6 +21,6 @@ export default () => ({
     description:
       'This provides comprehensive documentation for all rest API endpoints',
     path: 'api-docs',
-    theme: 'dark',
+    theme: SwaggerThemeNameEnum.DARK,
   },
 });
