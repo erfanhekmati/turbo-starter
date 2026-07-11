@@ -1,3 +1,5 @@
+import { JwtTtl } from "./enums";
+
 export default () => ({
   app: {
     port: parseInt(process.env.PORT ?? '8000', 10),
@@ -8,8 +10,8 @@ export default () => ({
     url: process.env.DATABASE_URL,
   },
   jwt: {
-    accessTokenTtl: process.env.JWT_ACCESS_TTL ?? '15m',
-    refreshTokenTtl: process.env.JWT_REFRESH_TTL ?? '7d',
+    accessTokenTtl: process.env.JWT_ACCESS_TTL ?? JwtTtl.FifteenMinutes,
+    refreshTokenTtl: process.env.JWT_REFRESH_TTL ?? JwtTtl.SevenDays,
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
   },
