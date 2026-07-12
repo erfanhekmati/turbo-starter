@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { setupSwagger } from './swagger';
 import { createWinstonLogger } from './logger';
@@ -14,6 +15,9 @@ async function bootstrap() {
 
   app.useLogger(createWinstonLogger(isProduction));
   const logger = new Logger('Bootstrap');
+
+  app.use(helmet());
+  app.enableCors();
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -39,4 +40,33 @@ export class EnvDto {
   @IsOptional()
   @IsString()
   JWT_REFRESH_TTL?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  OTP_HASH_SECRET!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SMTP_HOST!: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(65535)
+  SMTP_PORT!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  SMTP_USER!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SMTP_PASSWORD!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SMTP_FROM!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  SMTP_SECURE?: boolean;
 }

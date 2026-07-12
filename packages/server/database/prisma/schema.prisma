@@ -11,9 +11,85 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  email           String   @unique
+  firstName       String
+  lastName        String
+  passwordHash    String
+  emailVerifiedAt DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+  loginLockout  LoginLockout?
+}
+
+enum OtpPurpose {
+  REGISTRATION_EMAIL_VERIFICATION
+  LOGIN
+  PASSWORD_RESET
+}
+
+model OtpChallenge {
+  id                String     @id @default(uuid())
+  email             String
+  purpose           OtpPurpose
+  codeHash          String
+  attempts          Int        @default(0)
+  sentCount         Int        @default(1)
+  windowStartAt     DateTime   @default(now())
+  resendAvailableAt DateTime
+  expiresAt         DateTime
+  createdAt         DateTime   @default(now())
+
+  @@unique([email, purpose])
+}
+
+enum RegistrationStep {
+  EMAIL_PENDING_VERIFICATION
+  EMAIL_VERIFIED
+}
+
+model RegistrationSession {
+  id        String           @id @default(uuid())
+  email     String           @unique
+  step      RegistrationStep @default(EMAIL_PENDING_VERIFICATION)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+enum PasswordResetStep {
+  PENDING_VERIFICATION
+  VERIFIED
+}
+
+model PasswordResetSession {
+  id        String            @id @default(uuid())
+  email     String            @unique
+  step      PasswordResetStep @default(PENDING_VERIFICATION)
+  expiresAt DateTime
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model LoginLockout {
+  userId         String    @id
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  failedAttempts Int       @default(0)
+  lockedUntil    DateTime?
+  updatedAt      DateTime  @updatedAt
+}
+
+model RefreshToken {
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash           String    @unique
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedByTokenHash String?
+  createdAt           DateTime  @default(now())
+
+  @@index([userId])
 }

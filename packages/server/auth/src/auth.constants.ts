@@ -1,0 +1,14 @@
+export const AUTH_MODULE_OPTIONS = 'AUTH_MODULE_OPTIONS';
+
+export const OTP_LENGTH = 6;
+export const OTP_TTL_MINUTES = 10;
+export const OTP_RESEND_COOLDOWN_SECONDS = 30;
+export const OTP_MAX_SENDS_PER_WINDOW = 3;
+export const OTP_SEND_WINDOW_MINUTES = 10;
+export const OTP_MAX_VERIFY_ATTEMPTS = 5;
+
+export const REGISTRATION_SESSION_TTL_MINUTES = 30;
+export const PASSWORD_RESET_SESSION_TTL_MINUTES = 30;
+
+export const LOGIN_LOCKOUT_THRESHOLD = 5;
+export const LOGIN_LOCKOUT_MINUTES = 15;

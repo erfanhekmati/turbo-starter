@@ -16,6 +16,17 @@ export default () => ({
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
   },
+  otp: {
+    hashSecret: process.env.OTP_HASH_SECRET,
+  },
+  mail: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+    from: process.env.SMTP_FROM,
+    secure: process.env.SMTP_SECURE === 'true',
+  },
   swagger: {
     title: 'Rest API Docs',
     description:
