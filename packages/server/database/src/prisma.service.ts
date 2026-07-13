@@ -4,29 +4,30 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from './generated/prisma/client';
-import { Pool } from 'pg';
 import {
   DATABASE_MODULE_OPTIONS,
 } from './database.constants';
 import type { DatabaseModuleOptions } from './database.module-definition';
+import { mysqlUrlToPoolConfig } from './mysql-url.util';
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly pool: Pool;
+  private readonly adapter: PrismaMariaDb;
 
   constructor(
     @Inject(DATABASE_MODULE_OPTIONS)
     private readonly dbOptions: DatabaseModuleOptions,
   ) {
-    const pool = new Pool({ connectionString: dbOptions.connectionString });
-    const adapter = new PrismaPg(pool);
+    const adapter = new PrismaMariaDb(
+      mysqlUrlToPoolConfig(dbOptions.connectionString),
+    );
     super({ adapter });
-    this.pool = pool;
+    this.adapter = adapter;
   }
 
   async onModuleInit(): Promise<void> {
@@ -35,6 +36,6 @@ export class PrismaService
 
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
-    await this.pool.end();
+    await this.adapter.dispose();
   }
 }

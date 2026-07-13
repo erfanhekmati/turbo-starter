@@ -1,10 +1,14 @@
 import 'dotenv/config';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { mysqlUrlToPoolConfig } from '../src/mysql-url.util';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL is required to run the database seed.');
+}
+
+const adapter = new PrismaMariaDb(mysqlUrlToPoolConfig(connectionString));
 const prisma = new PrismaClient({ adapter });
 
 const ROLES = [
@@ -71,11 +75,11 @@ async function main(): Promise<void> {
 main()
   .then(async () => {
     await prisma.$disconnect();
-    await pool.end();
+    await adapter.dispose();
   })
   .catch(async (error: unknown) => {
     console.error(error);
     await prisma.$disconnect();
-    await pool.end();
+    await adapter.dispose();
     process.exit(1);
   });
