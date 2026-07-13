@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { TooManyRequestsException } from '@repo/auth';
 import { PrismaService } from '@repo/database';
+import { EmailService } from '../../email/email.service';
 import { LOGIN_LOCKOUT_MINUTES, LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
-import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
 
 @Injectable()
 export class LoginLockoutService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async assertNotLocked(userId: string): Promise<void> {
     const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
@@ -21,6 +25,8 @@ export class LoginLockoutService {
 
   async recordFailure(userId: string): Promise<void> {
     const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
+    const now = new Date();
+    const wasLocked = Boolean(lockout?.lockedUntil && lockout.lockedUntil > now);
     const failedAttempts = (lockout?.failedAttempts ?? 0) + 1;
     const lockedUntil =
       failedAttempts >= LOGIN_LOCKOUT_THRESHOLD
@@ -32,6 +38,17 @@ export class LoginLockoutService {
       create: { userId, failedAttempts, lockedUntil },
       update: { failedAttempts, lockedUntil },
     });
+
+    if (lockedUntil && !wasLocked) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+
+      if (user) {
+        await this.emailService.sendAccountLockedEmail(user.email, LOGIN_LOCKOUT_MINUTES);
+      }
+    }
   }
 
   async recordSuccess(userId: string): Promise<void> {

@@ -1,5 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  generateOtpCode,
+  hashOtp,
+  TooManyRequestsException,
+  verifyOtp as verifyOtpHash,
+} from '@repo/auth';
 import { OtpPurpose, PrismaService } from '@repo/database';
 import { EmailService } from '../../email/email.service';
 import {
@@ -10,8 +16,6 @@ import {
   OTP_SEND_WINDOW_MINUTES,
   OTP_TTL_MINUTES,
 } from '../auth.constants';
-import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
-import { generateOtpCode, hashOtp, verifyOtp as verifyOtpHash } from '../utils';
 
 @Injectable()
 export class OtpService {

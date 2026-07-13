@@ -2,13 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import { PrismaService } from '@repo/database';
-import type {
-  AccessTokenPayload,
-  AuthTokens,
-  RefreshTokenPayload,
+import {
+  hashToken,
+  type AccessTokenPayload,
+  type AuthTokens,
+  type RefreshTokenPayload,
 } from '@repo/auth';
-import { hashToken } from '../utils';
+import { PrismaService } from '@repo/database';
 
 @Injectable()
 export class TokenService {

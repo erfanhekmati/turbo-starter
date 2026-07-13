@@ -3,7 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from '@repo/database';
 import type { Transporter } from 'nodemailer';
 import { MAIL_TRANSPORTER } from './email.constants';
-import { otpEmailHtml, otpEmailSubject } from './templates/otp-email.template';
+import {
+  accountLockedEmailHtml,
+  accountLockedEmailSubject,
+  otpEmailHtml,
+  otpEmailSubject,
+  passwordChangedEmailHtml,
+  passwordChangedEmailSubject,
+  welcomeEmailHtml,
+  welcomeEmailSubject,
+} from './templates';
 
 @Injectable()
 export class EmailService {
@@ -17,11 +26,41 @@ export class EmailService {
   }
 
   async sendOtpEmail(email: string, code: string, purpose: OtpPurpose): Promise<void> {
-    await this.transporter.sendMail({
-      from: this.from,
+    await this.send({
       to: email,
       subject: otpEmailSubject(purpose),
       html: otpEmailHtml(purpose, code),
+    });
+  }
+
+  async sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+    await this.send({
+      to: email,
+      subject: welcomeEmailSubject(),
+      html: welcomeEmailHtml(firstName),
+    });
+  }
+
+  async sendPasswordChangedEmail(email: string): Promise<void> {
+    await this.send({
+      to: email,
+      subject: passwordChangedEmailSubject(),
+      html: passwordChangedEmailHtml(),
+    });
+  }
+
+  async sendAccountLockedEmail(email: string, lockoutMinutes: number): Promise<void> {
+    await this.send({
+      to: email,
+      subject: accountLockedEmailSubject(),
+      html: accountLockedEmailHtml(lockoutMinutes),
+    });
+  }
+
+  private async send(options: { to: string; subject: string; html: string }): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.from,
+      ...options,
     });
   }
 }

@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { OtpPurpose, PrismaService, RegistrationStep, User } from '@repo/database';
 import type { AuthTokens } from '@repo/auth';
+import { EmailService } from '../../email/email.service';
 import { REGISTRATION_SESSION_TTL_MINUTES } from '../auth.constants';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
@@ -13,6 +14,7 @@ export class RegistrationService {
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
+    private readonly emailService: EmailService,
   ) {}
 
   async start(email: string): Promise<string> {
@@ -83,6 +85,7 @@ export class RegistrationService {
     });
 
     const tokens = await this.tokenService.issueTokenPair(user.id, user.email);
+    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
 
     return { tokens, user };
   }
