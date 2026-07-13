@@ -1,11 +1,13 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@repo/auth';
-import { MessageResponseDto } from '../dto/message.response.dto';
-import { PasswordResetConfirmDto } from '../dto/password-reset-confirm.dto';
-import { PasswordResetSessionResponseDto } from '../dto/password-reset-session.response.dto';
-import { PasswordResetStartDto } from '../dto/password-reset-start.dto';
-import { PasswordResetVerifyDto } from '../dto/password-reset-verify.dto';
+import {
+  MessageResponseDto,
+  PasswordResetConfirmDto,
+  PasswordResetSessionResponseDto,
+  PasswordResetStartDto,
+  PasswordResetVerifyDto,
+} from '../dto';
 import { PasswordResetService } from '../services/password-reset.service';
 
 @ApiTags('auth/password-reset')

@@ -2,12 +2,14 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@repo/auth';
 import { plainToInstance } from 'class-transformer';
-import { AuthTokensResponseDto } from '../dto/auth-tokens.response.dto';
-import { LoginOtpStartDto } from '../dto/login-otp-start.dto';
-import { LoginOtpVerifyDto } from '../dto/login-otp-verify.dto';
-import { LoginPasswordDto } from '../dto/login-password.dto';
-import { MessageResponseDto } from '../dto/message.response.dto';
-import { UserResponseDto } from '../dto/user.response.dto';
+import {
+  AuthTokensResponseDto,
+  LoginOtpStartDto,
+  LoginOtpVerifyDto,
+  LoginPasswordDto,
+  MessageResponseDto,
+  UserResponseDto,
+} from '../dto';
 import { AuthService } from '../services/auth.service';
 
 @ApiTags('auth/login')

@@ -13,10 +13,12 @@ import type { AuthenticatedUser, RefreshTokenPayload } from '@repo/auth';
 import { CurrentRefreshToken, CurrentUser, JwtRefreshGuard, Public } from '@repo/auth';
 import { PrismaService } from '@repo/database';
 import { plainToInstance } from 'class-transformer';
-import { LogoutDto } from '../dto/logout.dto';
-import { RefreshTokenDto } from '../dto/refresh-token.dto';
-import { RefreshTokenResponseDto } from '../dto/refresh-token.response.dto';
-import { UserResponseDto } from '../dto/user.response.dto';
+import {
+  LogoutDto,
+  RefreshTokenDto,
+  RefreshTokenResponseDto,
+  UserResponseDto,
+} from '../dto';
 import { TokenService } from '../services/token.service';
 
 @ApiTags('auth')
