@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { OtpPurpose, PrismaService, User } from '@repo/database';
 import type { AuthTokens } from '../types';
 import { LoginLockoutService } from './login-lockout.service';
@@ -28,7 +32,10 @@ export class AuthService {
 
     await this.loginLockoutService.assertNotLocked(user.id);
 
-    const isValid = await this.passwordHasher.verify(user.passwordHash, password);
+    const isValid = await this.passwordHasher.verify(
+      user.passwordHash,
+      password,
+    );
 
     if (!isValid) {
       await this.loginLockoutService.recordFailure(user.id);

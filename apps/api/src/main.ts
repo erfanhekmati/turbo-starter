@@ -17,7 +17,9 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.use(helmet());
-  app.enableCors();
+
+  const corsOrigins = configService.get<string[]>('app.corsOrigins');
+  app.enableCors({ origin: corsOrigins ?? true });
 
   app.useGlobalPipes(
     new ValidationPipe({

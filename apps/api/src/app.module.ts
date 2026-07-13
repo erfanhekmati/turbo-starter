@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'node:path';
 import { DatabaseModule } from '@repo/database';
@@ -8,6 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { EmailModule } from './email/email.module';
+import { HealthModule } from './health/health.module';
+import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
 
 const packageRoot = join(__dirname, '..');
 const monorepoRoot = join(packageRoot, '..', '..');
@@ -31,7 +33,11 @@ const monorepoRoot = join(packageRoot, '..', '..');
     }),
     EmailModule,
     AuthModule,
+    HealthModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_FILTER, useClass: PrismaClientExceptionFilter },
+  ],
 })
 export class AppModule {}

@@ -21,6 +21,10 @@ export class EnvDto {
   @Max(65535)
   PORT?: number;
 
+  @IsOptional()
+  @IsString()
+  CORS_ORIGINS?: string;
+
   @IsString()
   @IsNotEmpty()
   DATABASE_URL!: string;
