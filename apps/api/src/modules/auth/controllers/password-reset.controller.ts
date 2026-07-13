@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from '@repo/auth';
+import { Public } from '../decorators';
 import {
   MessageResponseDto,
   PasswordResetConfirmDto,

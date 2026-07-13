@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from '@repo/auth';
 import { plainToInstance } from 'class-transformer';
+import { Public } from '../decorators';
 import {
   AuthTokensResponseDto,
   RegisterCompleteDto,

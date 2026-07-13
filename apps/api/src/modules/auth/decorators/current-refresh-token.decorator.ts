@@ -1,6 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import type { AuthenticatedRefreshRequest } from '../types/authenticated-refresh-request.type';
-import type { RefreshTokenPayload } from '../types/jwt-payload.type';
+import type { AuthenticatedRefreshRequest, RefreshTokenPayload } from '../types';
 
 export const CurrentRefreshToken = createParamDecorator(
   (_: unknown, ctx: ExecutionContext): RefreshTokenPayload => {

@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { OtpPurpose, PrismaService, RegistrationStep, User } from '@repo/database';
-import type { AuthTokens } from '@repo/auth';
+import type { AuthTokens } from '../types';
 import { EmailService } from '../../../email/email.service';
 import { REGISTRATION_SESSION_TTL_MINUTES } from '../auth.constants';
 import { OtpService } from './otp.service';

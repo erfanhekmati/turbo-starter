@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtAuthModule } from '@repo/auth';
+import { PassportModule } from '@nestjs/passport';
 import {
   LoginController,
   PasswordResetController,
   RegistrationController,
   TokenController,
 } from './controllers';
+import { JwtAccessGuard, JwtRefreshGuard } from './guards';
 import {
   AuthService,
   LoginLockoutService,
@@ -17,19 +18,10 @@ import {
   RegistrationService,
   TokenService,
 } from './services';
+import { JwtAccessStrategy, JwtRefreshStrategy } from './strategies';
 
 @Module({
-  imports: [
-    JwtModule.register({}),
-    JwtAuthModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        accessSecret: config.getOrThrow<string>('jwt.accessSecret'),
-        refreshSecret: config.getOrThrow<string>('jwt.refreshSecret'),
-      }),
-    }),
-  ],
+  imports: [JwtModule.register({}), PassportModule],
   controllers: [
     RegistrationController,
     LoginController,
@@ -44,7 +36,11 @@ import {
     AuthService,
     RegistrationService,
     PasswordResetService,
+    JwtAccessStrategy,
+    JwtRefreshStrategy,
+    JwtRefreshGuard,
+    { provide: APP_GUARD, useClass: JwtAccessGuard },
   ],
   exports: [TokenService],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -9,17 +9,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { AuthenticatedUser, RefreshTokenPayload } from '@repo/auth';
-import { CurrentRefreshToken, CurrentUser, JwtRefreshGuard, Public } from '@repo/auth';
 import { PrismaService } from '@repo/database';
 import { plainToInstance } from 'class-transformer';
+import { CurrentRefreshToken, CurrentUser, Public } from '../decorators';
 import {
   LogoutDto,
   RefreshTokenDto,
   RefreshTokenResponseDto,
   UserResponseDto,
 } from '../dto';
+import { JwtRefreshGuard } from '../guards';
 import { TokenService } from '../services';
+import type { AuthenticatedUser, RefreshTokenPayload } from '../types';
 
 @ApiTags('auth')
 @Controller('auth')

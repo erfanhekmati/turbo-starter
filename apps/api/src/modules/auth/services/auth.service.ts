@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { OtpPurpose, PrismaService, User } from '@repo/database';
-import type { AuthTokens } from '@repo/auth';
+import type { AuthTokens } from '../types';
 import { LoginLockoutService } from './login-lockout.service';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
