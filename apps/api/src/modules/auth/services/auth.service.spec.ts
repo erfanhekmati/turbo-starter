@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { OtpPurpose, PrismaService, User } from '@repo/database';
+import { OtpPurpose, PrismaService } from '@repo/database';
+import { RoleName } from '@repo/backend-types';
 import { TooManyRequestsException } from '../../../common/exceptions';
 import { AuthService } from './auth.service';
 import { LoginLockoutService } from './login-lockout.service';
@@ -24,11 +26,34 @@ describe('AuthService', () => {
   let otpService: { requestOtp: jest.Mock; verifyOtp: jest.Mock };
   let tokenService: { issueTokenPair: jest.Mock };
 
-  const user = {
+  const profile = {
     id: 'user-1',
     email: 'jane@example.com',
+    firstName: 'Jane',
+    lastName: 'Doe',
+    emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    roles: [RoleName.USER],
+    permissions: ['users:read'],
+  };
+
+  const userWithPassword = {
+    id: profile.id,
+    email: profile.email,
     passwordHash: 'hashed-password',
-  } as User;
+  };
+
+  const userWithAccess = {
+    ...profile,
+    roles: [
+      {
+        role: {
+          name: RoleName.USER,
+          permissions: [{ permission: { key: 'users:read' } }],
+        },
+      },
+    ],
+  };
 
   beforeEach(async () => {
     prisma = { user: { findUnique: jest.fn() } };
@@ -60,26 +85,30 @@ describe('AuthService', () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        authService.loginWithPassword(user.email, 'password'),
+        authService.loginWithPassword(profile.email, 'password'),
       ).rejects.toThrow(UnauthorizedException);
 
       expect(loginLockoutService.assertNotLocked).not.toHaveBeenCalled();
     });
 
     it('records a failure and throws UnauthorizedException on a wrong password', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.findUnique
+        .mockResolvedValueOnce(userWithPassword)
+        .mockResolvedValueOnce(userWithAccess);
       passwordHasher.verify.mockResolvedValue(false);
 
       await expect(
-        authService.loginWithPassword(user.email, 'wrong-password'),
+        authService.loginWithPassword(profile.email, 'wrong-password'),
       ).rejects.toThrow(UnauthorizedException);
 
-      expect(loginLockoutService.recordFailure).toHaveBeenCalledWith(user.id);
+      expect(loginLockoutService.recordFailure).toHaveBeenCalledWith(profile.id);
       expect(tokenService.issueTokenPair).not.toHaveBeenCalled();
     });
 
     it('issues a token pair on a correct password', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.findUnique
+        .mockResolvedValueOnce(userWithPassword)
+        .mockResolvedValueOnce(userWithAccess);
       passwordHasher.verify.mockResolvedValue(true);
       tokenService.issueTokenPair.mockResolvedValue({
         accessToken: 'access',
@@ -87,16 +116,16 @@ describe('AuthService', () => {
       });
 
       const result = await authService.loginWithPassword(
-        user.email,
+        profile.email,
         'correct-password',
       );
 
-      expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(user.id);
+      expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(profile.id);
       expect(result.tokens).toEqual({
         accessToken: 'access',
         refreshToken: 'refresh',
       });
-      expect(result.user).toEqual(user);
+      expect(result.user).toEqual(profile);
     });
   });
 
@@ -104,29 +133,35 @@ describe('AuthService', () => {
     it('returns silently when the user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await authService.startOtpLogin(user.email);
+      await authService.startOtpLogin(profile.email);
 
       expect(otpService.requestOtp).not.toHaveBeenCalled();
     });
 
     it('returns silently when the account is locked', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.findUnique.mockResolvedValue({
+        id: profile.id,
+        email: profile.email,
+      });
       loginLockoutService.assertNotLocked.mockRejectedValue(
         new TooManyRequestsException('locked', 60),
       );
 
-      await authService.startOtpLogin(user.email);
+      await authService.startOtpLogin(profile.email);
 
       expect(otpService.requestOtp).not.toHaveBeenCalled();
     });
 
     it('requests an OTP when the account is unlocked', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.findUnique.mockResolvedValue({
+        id: profile.id,
+        email: profile.email,
+      });
 
-      await authService.startOtpLogin(user.email);
+      await authService.startOtpLogin(profile.email);
 
       expect(otpService.requestOtp).toHaveBeenCalledWith(
-        user.email,
+        profile.email,
         OtpPurpose.LOGIN,
       );
     });
@@ -134,44 +169,49 @@ describe('AuthService', () => {
 
   describe('verifyOtpLogin', () => {
     it('asserts lockout, verifies OTP, clears failures, and issues tokens', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+      prisma.user.findUnique
+        .mockResolvedValueOnce({
+          id: profile.id,
+          email: profile.email,
+        })
+        .mockResolvedValueOnce(userWithAccess);
       tokenService.issueTokenPair.mockResolvedValue({
         accessToken: 'access',
         refreshToken: 'refresh',
       });
 
-      const result = await authService.verifyOtpLogin(user.email, '123456');
+      const result = await authService.verifyOtpLogin(profile.email, '123456');
 
-      expect(loginLockoutService.assertNotLocked).toHaveBeenCalledWith(user.id);
+      expect(loginLockoutService.assertNotLocked).toHaveBeenCalledWith(profile.id);
       expect(otpService.verifyOtp).toHaveBeenCalledWith(
-        user.email,
+        profile.email,
         OtpPurpose.LOGIN,
         '123456',
       );
-      expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(user.id);
-      expect(result.user).toEqual(user);
+      expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(profile.id);
+      expect(result.user).toEqual(profile);
     });
 
     it('throws BadRequestException when the user does not exist', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        authService.verifyOtpLogin(user.email, '123456'),
+        authService.verifyOtpLogin(profile.email, '123456'),
       ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('getProfile', () => {
-    it('returns the user when found', async () => {
-      prisma.user.findUnique.mockResolvedValue(user);
+    it('returns the user profile with roles and permissions when found', async () => {
+      prisma.user.findUnique.mockResolvedValue(userWithAccess);
 
-      await expect(authService.getProfile(user.id)).resolves.toEqual(user);
+      await expect(authService.getProfile(profile.id)).resolves.toEqual(profile);
     });
 
     it('throws NotFoundException when missing', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(authService.getProfile(user.id)).rejects.toThrow(
+      await expect(authService.getProfile(profile.id)).rejects.toThrow(
         NotFoundException,
       );
     });

@@ -1,10 +1,20 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OtpPurpose, PrismaService, RegistrationStep, User } from '@repo/database';
+import { RoleName } from '@repo/backend-types';
+import { OtpPurpose, PrismaService, RegistrationStep } from '@repo/database';
 import type { AuthTokens } from '../types';
 import { EmailService } from '../../email/email.service';
 import { isExpired, sessionExpiresAt } from '../utils';
+import {
+  flattenUserAccess,
+  userAccessSelect,
+  type UserProfile,
+} from '../utils/user-access.util';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
@@ -70,7 +80,7 @@ export class RegistrationService {
     firstName: string,
     lastName: string,
     password: string,
-  ): Promise<{ tokens: AuthTokens; user: User }> {
+  ): Promise<{ tokens: AuthTokens; user: UserProfile }> {
     const session = await this.getActiveSession(registrationId);
 
     if (session.step !== RegistrationStep.EMAIL_VERIFIED) {
@@ -79,7 +89,7 @@ export class RegistrationService {
 
     const passwordHash = await this.passwordHasher.hash(password);
 
-    const user = await this.prisma.$transaction(async (tx) => {
+    const userId = await this.prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
           email: session.email,
@@ -89,14 +99,35 @@ export class RegistrationService {
           emailVerifiedAt: new Date(),
         },
       });
+
+      const defaultRole = await tx.role.findUnique({
+        where: { name: RoleName.USER },
+      });
+
+      if (!defaultRole) {
+        throw new InternalServerErrorException('Default role not configured');
+      }
+
+      await tx.userRole.create({
+        data: {
+          userId: createdUser.id,
+          roleId: defaultRole.id,
+        },
+      });
+
       await tx.registrationSession.delete({ where: { id: session.id } });
-      return createdUser;
+      return createdUser.id;
     });
 
-    const tokens = await this.tokenService.issueTokenPair(user.id, user.email);
-    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: userAccessSelect,
+    });
+    const profile = flattenUserAccess(user);
+    const tokens = await this.tokenService.issueTokenPair(profile.id, profile.email);
+    await this.emailService.sendWelcomeEmail(profile.email, profile.firstName);
 
-    return { tokens, user };
+    return { tokens, user: profile };
   }
 
   private async getActiveSession(registrationId: string) {

@@ -1,3 +1,5 @@
+export * from './rbac';
+
 /** JSON-serializable values for API boundaries and caching. */
 export type JsonPrimitive = string | number | boolean | null;
 

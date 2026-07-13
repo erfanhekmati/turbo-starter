@@ -26,4 +26,12 @@ export class UserResponseDto {
   @ApiProperty()
   @Expose()
   createdAt!: Date;
+
+  @ApiProperty({ type: [String] })
+  @Expose()
+  roles!: string[];
+
+  @ApiProperty({ type: [String] })
+  @Expose()
+  permissions!: string[];
 }

@@ -4,8 +4,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { OtpPurpose, PrismaService, User } from '@repo/database';
+import { OtpPurpose, PrismaService } from '@repo/database';
 import type { AuthTokens } from '../types';
+import {
+  flattenUserAccess,
+  userAccessSelect,
+  type UserProfile,
+} from '../utils/user-access.util';
 import { LoginLockoutService } from './login-lockout.service';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
@@ -24,8 +29,15 @@ export class AuthService {
   async loginWithPassword(
     email: string,
     password: string,
-  ): Promise<{ tokens: AuthTokens; user: User }> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  ): Promise<{ tokens: AuthTokens; user: UserProfile }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+      },
+    });
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -45,8 +57,9 @@ export class AuthService {
 
     await this.loginLockoutService.recordSuccess(user.id);
     const tokens = await this.tokenService.issueTokenPair(user.id, user.email);
+    const profile = await this.getProfile(user.id);
 
-    return { tokens, user };
+    return { tokens, user: profile };
   }
 
   async startOtpLogin(email: string): Promise<void> {
@@ -69,8 +82,11 @@ export class AuthService {
   async verifyOtpLogin(
     email: string,
     code: string,
-  ): Promise<{ tokens: AuthTokens; user: User }> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+  ): Promise<{ tokens: AuthTokens; user: UserProfile }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true },
+    });
 
     if (!user) {
       throw new BadRequestException('Invalid or expired code');
@@ -81,17 +97,21 @@ export class AuthService {
     await this.loginLockoutService.recordSuccess(user.id);
 
     const tokens = await this.tokenService.issueTokenPair(user.id, user.email);
+    const profile = await this.getProfile(user.id);
 
-    return { tokens, user };
+    return { tokens, user: profile };
   }
 
-  async getProfile(userId: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  async getProfile(userId: string): Promise<UserProfile> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: userAccessSelect,
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return flattenUserAccess(user);
   }
 }

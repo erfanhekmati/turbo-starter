@@ -9,7 +9,12 @@ import {
   RegistrationController,
   TokenController,
 } from './controllers';
-import { JwtAccessGuard, JwtRefreshGuard } from './guards';
+import {
+  JwtAccessGuard,
+  JwtRefreshGuard,
+  PermissionsGuard,
+  RolesGuard,
+} from './guards';
 import {
   AuthService,
   LoginLockoutService,
@@ -50,6 +55,8 @@ import { JwtAccessStrategy, JwtRefreshStrategy } from './strategies';
     JwtRefreshStrategy,
     JwtRefreshGuard,
     { provide: APP_GUARD, useClass: JwtAccessGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
   exports: [TokenService],
 })
