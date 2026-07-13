@@ -1,18 +1,19 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { JwtService } from '@nestjs/jwt';
-import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
+import type { RefreshTokenPayload } from '@repo/auth';
 import { hashToken } from '../utils/hmac.util';
 import { TokenService } from './token.service';
 
 describe('TokenService', () => {
-  const options = {
-    jwt: {
-      accessSecret: 'access-secret',
-      refreshSecret: 'refresh-secret',
-      accessTtl: '15m',
-      refreshTtl: '7d',
-    },
-  } as ResolvedAuthModuleOptions;
+  const configValues: Record<string, string> = {
+    'jwt.accessSecret': 'access-secret',
+    'jwt.refreshSecret': 'refresh-secret',
+    'jwt.accessTokenTtl': '15m',
+    'jwt.refreshTokenTtl': '7d',
+  };
+  const config = {
+    getOrThrow: jest.fn((key: string) => configValues[key]),
+  };
 
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync' | 'verifyAsync' | 'decode'>>;
   let prisma: {
@@ -26,6 +27,7 @@ describe('TokenService', () => {
   };
   let service: TokenService;
   let tokenCounter = 0;
+  const payload: RefreshTokenPayload = { sub: 'user-1', jti: 'jti-1' };
 
   beforeEach(() => {
     tokenCounter = 0;
@@ -46,7 +48,7 @@ describe('TokenService', () => {
     service = new TokenService(
       jwtService as unknown as JwtService,
       prisma as never,
-      options,
+      config as never,
     );
   });
 
@@ -67,7 +69,6 @@ describe('TokenService', () => {
 
   describe('rotateRefreshToken', () => {
     it('rotates a valid, unrevoked refresh token', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 'user-1', jti: 'jti-1' });
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'stored-1',
         userId: 'user-1',
@@ -79,7 +80,7 @@ describe('TokenService', () => {
         email: 'user@example.com',
       });
 
-      const tokens = await service.rotateRefreshToken('old-refresh-token');
+      const tokens = await service.rotateRefreshToken('old-refresh-token', payload);
 
       expect(tokens.accessToken).toBeDefined();
       expect(prisma.refreshToken.update).toHaveBeenCalledWith({
@@ -89,7 +90,6 @@ describe('TokenService', () => {
     });
 
     it('revokes all tokens for the user and rejects on refresh token reuse', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 'user-1', jti: 'jti-1' });
       prisma.refreshToken.findUnique.mockResolvedValue({
         id: 'stored-1',
         userId: 'user-1',
@@ -97,9 +97,9 @@ describe('TokenService', () => {
         expiresAt: new Date(Date.now() + 60_000),
       });
 
-      await expect(service.rotateRefreshToken('reused-token')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.rotateRefreshToken('reused-token', payload),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
       expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'user-1', revokedAt: null },
         data: { revokedAt: expect.any(Date) },
@@ -107,20 +107,24 @@ describe('TokenService', () => {
     });
 
     it('rejects when the token is not a known refresh token', async () => {
-      jwtService.verifyAsync.mockResolvedValue({ sub: 'user-1', jti: 'jti-1' });
       prisma.refreshToken.findUnique.mockResolvedValue(null);
 
-      await expect(service.rotateRefreshToken('unknown-token')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.rotateRefreshToken('unknown-token', payload),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
-    it('rejects when the JWT signature/expiry check fails', async () => {
-      jwtService.verifyAsync.mockRejectedValue(new Error('invalid signature'));
+    it('rejects when the refresh token has expired in storage', async () => {
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        id: 'stored-1',
+        userId: 'user-1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() - 1000),
+      });
 
-      await expect(service.rotateRefreshToken('garbage')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
+      await expect(
+        service.rotateRefreshToken('expired-token', payload),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 });

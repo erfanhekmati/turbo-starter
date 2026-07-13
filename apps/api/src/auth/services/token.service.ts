@@ -1,14 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { PrismaService } from '@repo/database';
-import { AUTH_MODULE_OPTIONS } from '../auth.constants';
-import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
-import type { AuthTokens } from '../types/auth-tokens.type';
 import type {
   AccessTokenPayload,
+  AuthTokens,
   RefreshTokenPayload,
-} from '../types/jwt-payload.type';
+} from '@repo/auth';
 import { hashToken } from '../utils/hmac.util';
 
 @Injectable()
@@ -16,20 +15,24 @@ export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
+    private readonly config: ConfigService,
   ) {}
 
   async issueTokenPair(userId: string, email: string): Promise<AuthTokens> {
     const accessPayload: AccessTokenPayload = { sub: userId, email };
     const accessToken = await this.jwtService.signAsync(accessPayload, {
-      secret: this.options.jwt.accessSecret,
-      expiresIn: this.options.jwt.accessTtl as JwtSignOptions['expiresIn'],
+      secret: this.config.getOrThrow<string>('jwt.accessSecret'),
+      expiresIn: this.config.getOrThrow<string>(
+        'jwt.accessTokenTtl',
+      ) as JwtSignOptions['expiresIn'],
     });
 
     const refreshPayload: RefreshTokenPayload = { sub: userId, jti: randomUUID() };
     const refreshToken = await this.jwtService.signAsync(refreshPayload, {
-      secret: this.options.jwt.refreshSecret,
-      expiresIn: this.options.jwt.refreshTtl as JwtSignOptions['expiresIn'],
+      secret: this.config.getOrThrow<string>('jwt.refreshSecret'),
+      expiresIn: this.config.getOrThrow<string>(
+        'jwt.refreshTokenTtl',
+      ) as JwtSignOptions['expiresIn'],
     });
 
     await this.prisma.refreshToken.create({
@@ -43,8 +46,10 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  async rotateRefreshToken(refreshToken: string): Promise<AuthTokens> {
-    const payload = await this.verifyRefreshToken(refreshToken);
+  async rotateRefreshToken(
+    refreshToken: string,
+    payload: RefreshTokenPayload,
+  ): Promise<AuthTokens> {
     const tokenHash = hashToken(refreshToken);
     const stored = await this.prisma.refreshToken.findUnique({ where: { tokenHash } });
 
@@ -92,16 +97,6 @@ export class TokenService {
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
-  }
-
-  private async verifyRefreshToken(refreshToken: string): Promise<RefreshTokenPayload> {
-    try {
-      return await this.jwtService.verifyAsync<RefreshTokenPayload>(refreshToken, {
-        secret: this.options.jwt.refreshSecret,
-      });
-    } catch {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
   }
 
   private extractExpiry(token: string): Date {

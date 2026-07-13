@@ -1,15 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@repo/database';
-import { AUTH_MODULE_OPTIONS } from '../auth.constants';
+import { LOGIN_LOCKOUT_MINUTES, LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
-import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 
 @Injectable()
 export class LoginLockoutService {
-  constructor(
-    private readonly prisma: PrismaService,
-    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async assertNotLocked(userId: string): Promise<void> {
     const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
@@ -27,8 +23,8 @@ export class LoginLockoutService {
     const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
     const failedAttempts = (lockout?.failedAttempts ?? 0) + 1;
     const lockedUntil =
-      failedAttempts >= this.options.loginLockout.threshold
-        ? new Date(Date.now() + this.options.loginLockout.lockoutMinutes * 60_000)
+      failedAttempts >= LOGIN_LOCKOUT_THRESHOLD
+        ? new Date(Date.now() + LOGIN_LOCKOUT_MINUTES * 60_000)
         : null;
 
     await this.prisma.loginLockout.upsert({

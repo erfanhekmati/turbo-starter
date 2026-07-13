@@ -1,33 +1,13 @@
 import { OtpPurpose } from '@repo/database';
-import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
 import { hashOtp } from '../utils/hmac.util';
 import { OtpService } from './otp.service';
 
 describe('OtpService', () => {
   const otpSecret = 'test-secret';
+  const config = { getOrThrow: jest.fn().mockReturnValue(otpSecret) };
   const sendOtpEmail = jest.fn().mockResolvedValue(undefined);
-  const options: ResolvedAuthModuleOptions = {
-    jwt: {
-      accessSecret: 'access-secret',
-      refreshSecret: 'refresh-secret',
-      accessTtl: '15m',
-      refreshTtl: '7d',
-    },
-    otpSecret,
-    sendOtpEmail,
-    otp: {
-      length: 6,
-      ttlMinutes: 10,
-      resendCooldownSeconds: 30,
-      maxSendsPerWindow: 3,
-      sendWindowMinutes: 10,
-      maxVerifyAttempts: 5,
-    },
-    registration: { sessionTtlMinutes: 30 },
-    passwordReset: { sessionTtlMinutes: 30 },
-    loginLockout: { threshold: 5, lockoutMinutes: 15 },
-  };
+  const emailService = { sendOtpEmail };
 
   let prisma: {
     otpChallenge: {
@@ -49,7 +29,7 @@ describe('OtpService', () => {
         delete: jest.fn(),
       },
     };
-    service = new OtpService(prisma as never, options);
+    service = new OtpService(prisma as never, config as never, emailService as never);
   });
 
   describe('requestOtp', () => {

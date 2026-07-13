@@ -1,13 +1,7 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { OtpPurpose, PrismaService, RegistrationStep, User } from '@repo/database';
-import { AUTH_MODULE_OPTIONS } from '../auth.constants';
-import type { AuthTokens } from '../types/auth-tokens.type';
-import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
+import type { AuthTokens } from '@repo/auth';
+import { REGISTRATION_SESSION_TTL_MINUTES } from '../auth.constants';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
@@ -19,7 +13,6 @@ export class RegistrationService {
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
-    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
   ) {}
 
   async start(email: string): Promise<string> {
@@ -29,7 +22,7 @@ export class RegistrationService {
       throw new ConflictException('Email is already registered');
     }
 
-    const sessionTtlMs = this.options.registration.sessionTtlMinutes * 60_000;
+    const sessionTtlMs = REGISTRATION_SESSION_TTL_MINUTES * 60_000;
     const session = await this.prisma.registrationSession.upsert({
       where: { email },
       create: { email, expiresAt: new Date(Date.now() + sessionTtlMs) },

@@ -3,12 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'node:path';
-import { AuthModule } from '@repo/auth';
 import { DatabaseModule } from '@repo/database';
+import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { EmailModule } from './email/email.module';
-import { EmailService } from './email/email.service';
 
 const packageRoot = join(__dirname, '..');
 const monorepoRoot = join(packageRoot, '..', '..');
@@ -31,21 +30,7 @@ const monorepoRoot = join(packageRoot, '..', '..');
       }),
     }),
     EmailModule,
-    AuthModule.forRootAsync({
-      imports: [ConfigModule, EmailModule],
-      inject: [ConfigService, EmailService],
-      useFactory: (config: ConfigService, emailService: EmailService) => ({
-        jwt: {
-          accessSecret: config.getOrThrow<string>('jwt.accessSecret'),
-          refreshSecret: config.getOrThrow<string>('jwt.refreshSecret'),
-          accessTtl: config.getOrThrow<string>('jwt.accessTokenTtl'),
-          refreshTtl: config.getOrThrow<string>('jwt.refreshTokenTtl'),
-        },
-        otpSecret: config.getOrThrow<string>('otp.hashSecret'),
-        sendOtpEmail: ({ email, code, purpose }) =>
-          emailService.sendOtpEmail(email, code, purpose),
-      }),
-    }),
+    AuthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
