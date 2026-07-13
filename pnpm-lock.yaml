@@ -53,6 +53,9 @@ importers:
       nest-winston:
         specifier: ^1.10.2
         version: 1.10.2(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.19.0)
+      nodemailer:
+        specifier: ^6.9.16
+        version: 6.10.1
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -96,6 +99,9 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.12.2
+      '@types/nodemailer':
+        specifier: ^6.4.17
+        version: 6.4.24
       '@types/supertest':
         specifier: ^7.0.0
         version: 7.2.0
@@ -329,9 +335,6 @@ importers:
       argon2:
         specifier: ^0.41.1
         version: 0.41.1
-      nodemailer:
-        specifier: ^6.9.16
-        version: 6.10.1
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -363,9 +366,6 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.17
-      '@types/nodemailer':
-        specifier: ^6.4.17
-        version: 6.4.24
       '@types/passport-jwt':
         specifier: ^4.0.1
         version: 4.0.1

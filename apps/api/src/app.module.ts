@@ -7,6 +7,8 @@ import { AuthModule } from '@repo/auth';
 import { DatabaseModule } from '@repo/database';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
+import { EmailModule } from './email/email.module';
+import { EmailService } from './email/email.service';
 
 const packageRoot = join(__dirname, '..');
 const monorepoRoot = join(packageRoot, '..', '..');
@@ -28,10 +30,11 @@ const monorepoRoot = join(packageRoot, '..', '..');
         connectionString: config.getOrThrow<string>('DATABASE_URL'),
       }),
     }),
+    EmailModule,
     AuthModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      imports: [ConfigModule, EmailModule],
+      inject: [ConfigService, EmailService],
+      useFactory: (config: ConfigService, emailService: EmailService) => ({
         jwt: {
           accessSecret: config.getOrThrow<string>('jwt.accessSecret'),
           refreshSecret: config.getOrThrow<string>('jwt.refreshSecret'),
@@ -39,14 +42,8 @@ const monorepoRoot = join(packageRoot, '..', '..');
           refreshTtl: config.getOrThrow<string>('jwt.refreshTokenTtl'),
         },
         otpSecret: config.getOrThrow<string>('otp.hashSecret'),
-        mail: {
-          host: config.getOrThrow<string>('mail.host'),
-          port: config.getOrThrow<number>('mail.port'),
-          user: config.getOrThrow<string>('mail.user'),
-          password: config.getOrThrow<string>('mail.password'),
-          from: config.getOrThrow<string>('mail.from'),
-          secure: config.get<boolean>('mail.secure'),
-        },
+        sendOtpEmail: ({ email, code, purpose }) =>
+          emailService.sendOtpEmail(email, code, purpose),
       }),
     }),
   ],

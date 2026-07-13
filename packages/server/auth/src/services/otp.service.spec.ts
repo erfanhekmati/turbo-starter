@@ -1,13 +1,33 @@
 import { OtpPurpose } from '@repo/database';
-import type { AuthModuleOptions } from '../types/auth-module-options.type';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
 import { hashOtp } from '../utils/hmac.util';
-import type { MailService } from '../mail/mail.service';
 import { OtpService } from './otp.service';
 
 describe('OtpService', () => {
   const otpSecret = 'test-secret';
-  const options = { otpSecret } as AuthModuleOptions;
+  const sendOtpEmail = jest.fn().mockResolvedValue(undefined);
+  const options: ResolvedAuthModuleOptions = {
+    jwt: {
+      accessSecret: 'access-secret',
+      refreshSecret: 'refresh-secret',
+      accessTtl: '15m',
+      refreshTtl: '7d',
+    },
+    otpSecret,
+    sendOtpEmail,
+    otp: {
+      length: 6,
+      ttlMinutes: 10,
+      resendCooldownSeconds: 30,
+      maxSendsPerWindow: 3,
+      sendWindowMinutes: 10,
+      maxVerifyAttempts: 5,
+    },
+    registration: { sessionTtlMinutes: 30 },
+    passwordReset: { sessionTtlMinutes: 30 },
+    loginLockout: { threshold: 5, lockoutMinutes: 15 },
+  };
 
   let prisma: {
     otpChallenge: {
@@ -17,10 +37,10 @@ describe('OtpService', () => {
       delete: jest.Mock;
     };
   };
-  let mailService: jest.Mocked<Pick<MailService, 'sendOtpEmail'>>;
   let service: OtpService;
 
   beforeEach(() => {
+    sendOtpEmail.mockClear();
     prisma = {
       otpChallenge: {
         findUnique: jest.fn(),
@@ -29,12 +49,7 @@ describe('OtpService', () => {
         delete: jest.fn(),
       },
     };
-    mailService = { sendOtpEmail: jest.fn().mockResolvedValue(undefined) };
-    service = new OtpService(
-      prisma as never,
-      mailService as unknown as MailService,
-      options,
-    );
+    service = new OtpService(prisma as never, options);
   });
 
   describe('requestOtp', () => {
@@ -53,7 +68,7 @@ describe('OtpService', () => {
           }),
         }),
       );
-      expect(mailService.sendOtpEmail).toHaveBeenCalledTimes(1);
+      expect(sendOtpEmail).toHaveBeenCalledTimes(1);
     });
 
     it('throws within the 30s resend cooldown window', async () => {
@@ -69,7 +84,7 @@ describe('OtpService', () => {
       await expect(
         service.requestOtp('user@example.com', OtpPurpose.LOGIN),
       ).rejects.toBeInstanceOf(TooManyRequestsException);
-      expect(mailService.sendOtpEmail).not.toHaveBeenCalled();
+      expect(sendOtpEmail).not.toHaveBeenCalled();
     });
 
     it('throws once max sends per 10-minute window has been reached', async () => {
@@ -85,7 +100,7 @@ describe('OtpService', () => {
       await expect(
         service.requestOtp('user@example.com', OtpPurpose.LOGIN),
       ).rejects.toBeInstanceOf(TooManyRequestsException);
-      expect(mailService.sendOtpEmail).not.toHaveBeenCalled();
+      expect(sendOtpEmail).not.toHaveBeenCalled();
     });
 
     it('resets the send window once the previous window has elapsed', async () => {

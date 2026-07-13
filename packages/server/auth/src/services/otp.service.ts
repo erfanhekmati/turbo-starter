@@ -1,29 +1,16 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { OtpPurpose, PrismaService } from '@repo/database';
-import {
-  AUTH_MODULE_OPTIONS,
-  OTP_MAX_SENDS_PER_WINDOW,
-  OTP_MAX_VERIFY_ATTEMPTS,
-  OTP_RESEND_COOLDOWN_SECONDS,
-  OTP_SEND_WINDOW_MINUTES,
-  OTP_TTL_MINUTES,
-} from '../auth.constants';
+import { AUTH_MODULE_OPTIONS } from '../auth.constants';
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
-import type { AuthModuleOptions } from '../types/auth-module-options.type';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { hashOtp, verifyOtp as verifyOtpHash } from '../utils/hmac.util';
 import { generateOtpCode } from '../utils/otp-code.util';
-import { MailService } from '../mail/mail.service';
-
-const SEND_WINDOW_MS = OTP_SEND_WINDOW_MINUTES * 60_000;
-const RESEND_COOLDOWN_MS = OTP_RESEND_COOLDOWN_SECONDS * 1000;
-const OTP_TTL_MS = OTP_TTL_MINUTES * 60_000;
 
 @Injectable()
 export class OtpService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly mailService: MailService,
-    @Inject(AUTH_MODULE_OPTIONS) private readonly options: AuthModuleOptions,
+    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
   ) {}
 
   async requestOtp(email: string, purpose: OtpPurpose): Promise<void> {
@@ -39,20 +26,23 @@ export class OtpService {
       );
     }
 
-    const { windowStartAt, sentCount } = this.nextWindow(existing, now);
+    const sendWindowMs = this.options.otp.sendWindowMinutes * 60_000;
+    const { windowStartAt, sentCount } = this.nextWindow(existing, now, sendWindowMs);
 
-    if (sentCount > OTP_MAX_SENDS_PER_WINDOW) {
-      const windowEndsAt = new Date(windowStartAt.getTime() + SEND_WINDOW_MS);
+    if (sentCount > this.options.otp.maxSendsPerWindow) {
+      const windowEndsAt = new Date(windowStartAt.getTime() + sendWindowMs);
       throw new TooManyRequestsException(
         'Too many code requests, please try again later',
         this.secondsUntil(windowEndsAt, now),
       );
     }
 
-    const code = generateOtpCode();
+    const code = generateOtpCode(this.options.otp.length);
     const codeHash = hashOtp(code, this.options.otpSecret);
-    const expiresAt = new Date(now.getTime() + OTP_TTL_MS);
-    const resendAvailableAt = new Date(now.getTime() + RESEND_COOLDOWN_MS);
+    const expiresAt = new Date(now.getTime() + this.options.otp.ttlMinutes * 60_000);
+    const resendAvailableAt = new Date(
+      now.getTime() + this.options.otp.resendCooldownSeconds * 1000,
+    );
 
     await this.prisma.otpChallenge.upsert({
       where: { email_purpose: { email, purpose } },
@@ -75,7 +65,7 @@ export class OtpService {
       },
     });
 
-    await this.mailService.sendOtpEmail(email, code, purpose);
+    await this.options.sendOtpEmail({ email, code, purpose });
   }
 
   async verifyOtp(email: string, purpose: OtpPurpose, code: string): Promise<void> {
@@ -89,7 +79,10 @@ export class OtpService {
 
     const now = new Date();
 
-    if (challenge.expiresAt < now || challenge.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+    if (
+      challenge.expiresAt < now ||
+      challenge.attempts >= this.options.otp.maxVerifyAttempts
+    ) {
       await this.prisma.otpChallenge.delete({ where: { id: challenge.id } });
       throw new BadRequestException('Invalid or expired code');
     }
@@ -110,8 +103,9 @@ export class OtpService {
   private nextWindow(
     existing: { windowStartAt: Date; sentCount: number } | null,
     now: Date,
+    sendWindowMs: number,
   ): { windowStartAt: Date; sentCount: number } {
-    if (existing && now.getTime() - existing.windowStartAt.getTime() < SEND_WINDOW_MS) {
+    if (existing && now.getTime() - existing.windowStartAt.getTime() < sendWindowMs) {
       return { windowStartAt: existing.windowStartAt, sentCount: existing.sentCount + 1 };
     }
     return { windowStartAt: now, sentCount: 1 };

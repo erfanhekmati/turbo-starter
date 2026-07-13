@@ -1,11 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { OtpPurpose, PasswordResetStep, PrismaService } from '@repo/database';
-import { PASSWORD_RESET_SESSION_TTL_MINUTES } from '../auth.constants';
+import { AUTH_MODULE_OPTIONS } from '../auth.constants';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
-
-const SESSION_TTL_MS = PASSWORD_RESET_SESSION_TTL_MINUTES * 60_000;
 
 @Injectable()
 export class PasswordResetService {
@@ -14,15 +13,17 @@ export class PasswordResetService {
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
+    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
   ) {}
 
   async start(email: string): Promise<string> {
+    const sessionTtlMs = this.options.passwordReset.sessionTtlMinutes * 60_000;
     const session = await this.prisma.passwordResetSession.upsert({
       where: { email },
-      create: { email, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
+      create: { email, expiresAt: new Date(Date.now() + sessionTtlMs) },
       update: {
         step: PasswordResetStep.PENDING_VERIFICATION,
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS),
+        expiresAt: new Date(Date.now() + sessionTtlMs),
       },
     });
 

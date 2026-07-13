@@ -3,7 +3,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { PrismaService } from '@repo/database';
 import { AUTH_MODULE_OPTIONS } from '../auth.constants';
-import type { AuthModuleOptions } from '../types/auth-module-options.type';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import type { AuthTokens } from '../types/auth-tokens.type';
 import type {
   AccessTokenPayload,
@@ -16,7 +16,7 @@ export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
-    @Inject(AUTH_MODULE_OPTIONS) private readonly options: AuthModuleOptions,
+    @Inject(AUTH_MODULE_OPTIONS) private readonly options: ResolvedAuthModuleOptions,
   ) {}
 
   async issueTokenPair(userId: string, email: string): Promise<AuthTokens> {

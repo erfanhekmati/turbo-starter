@@ -1,6 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { JwtService } from '@nestjs/jwt';
-import type { AuthModuleOptions } from '../types/auth-module-options.type';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { hashToken } from '../utils/hmac.util';
 import { TokenService } from './token.service';
 
@@ -12,7 +12,7 @@ describe('TokenService', () => {
       accessTtl: '15m',
       refreshTtl: '7d',
     },
-  } as AuthModuleOptions;
+  } as ResolvedAuthModuleOptions;
 
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync' | 'verifyAsync' | 'decode'>>;
   let prisma: {

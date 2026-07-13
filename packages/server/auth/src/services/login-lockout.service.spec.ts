@@ -1,8 +1,15 @@
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
-import { LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
+import { DEFAULT_LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
+import type { ResolvedAuthModuleOptions } from '../types/auth-module-options.type';
 import { LoginLockoutService } from './login-lockout.service';
 
+const LOGIN_LOCKOUT_THRESHOLD = DEFAULT_LOGIN_LOCKOUT_THRESHOLD;
+
 describe('LoginLockoutService', () => {
+  const options = {
+    loginLockout: { threshold: LOGIN_LOCKOUT_THRESHOLD, lockoutMinutes: 15 },
+  } as ResolvedAuthModuleOptions;
+
   let prisma: {
     loginLockout: {
       findUnique: jest.Mock;
@@ -20,7 +27,7 @@ describe('LoginLockoutService', () => {
         deleteMany: jest.fn(),
       },
     };
-    service = new LoginLockoutService(prisma as never);
+    service = new LoginLockoutService(prisma as never, options);
   });
 
   describe('assertNotLocked', () => {

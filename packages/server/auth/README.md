@@ -34,18 +34,23 @@ A self-contained NestJS authentication module providing email/password login, OT
 
 The module is consumed as a workspace package (`@repo/auth`) and registered with `AuthModule.forRootAsync`, following the same async-options pattern as `@repo/database`'s `DatabaseModule`. It must be imported alongside `DatabaseModule` since all services depend on `PrismaService`.
 
+The auth package has **zero mail-sending code of its own** — no transport, no templates, no exported mail types. It only knows how to *ask* for an OTP email to be sent, via a plain `sendOtpEmail` callback that the host app supplies as part of `AuthModuleOptions`. In `apps/api`, that callback is backed by [`apps/api/src/email`](../../../apps/api/src/email), a self-contained module that owns everything about mail delivery (SMTP transport, templates, provider swapping) — see [Extending Mail Delivery](#extending-mail-delivery).
+
 ```ts
 // apps/api/src/app.module.ts
 import { AuthModule } from '@repo/auth';
 import { DatabaseModule } from '@repo/database';
+import { EmailModule } from './email/email.module';
+import { EmailService } from './email/email.service';
 
 @Module({
   imports: [
     DatabaseModule.forRootAsync({ /* ... */ }),
+    EmailModule,
     AuthModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      imports: [ConfigModule, EmailModule],
+      inject: [ConfigService, EmailService],
+      useFactory: (config: ConfigService, emailService: EmailService) => ({
         jwt: {
           accessSecret: config.getOrThrow<string>('jwt.accessSecret'),
           refreshSecret: config.getOrThrow<string>('jwt.refreshSecret'),
@@ -53,14 +58,10 @@ import { DatabaseModule } from '@repo/database';
           refreshTtl: config.getOrThrow<string>('jwt.refreshTokenTtl'),
         },
         otpSecret: config.getOrThrow<string>('otp.hashSecret'),
-        mail: {
-          host: config.getOrThrow<string>('mail.host'),
-          port: config.getOrThrow<number>('mail.port'),
-          user: config.getOrThrow<string>('mail.user'),
-          password: config.getOrThrow<string>('mail.password'),
-          from: config.getOrThrow<string>('mail.from'),
-          secure: config.get<boolean>('mail.secure'),
-        },
+        sendOtpEmail: ({ email, code, purpose }) =>
+          emailService.sendOtpEmail(email, code, purpose),
+        // otp / registration / passwordReset / loginLockout are all optional —
+        // see Configuration below for the full list of overridable knobs.
       }),
     }),
   ],
@@ -71,29 +72,46 @@ export class AppModule {}
 `AuthModule.forRootAsync` registers:
 
 - Controllers: `RegistrationController`, `LoginController`, `PasswordResetController`, `TokenController`.
-- Providers: `MailService` (+ `NodemailerMailSender` bound to the `MailSender` abstract class), `PasswordHasherService`, `OtpService`, `LoginLockoutService`, `TokenService`, `AuthService`, `RegistrationService`, `PasswordResetService`, `JwtAccessStrategy`.
+- Providers: `PasswordHasherService`, `OtpService`, `LoginLockoutService`, `TokenService`, `AuthService`, `RegistrationService`, `PasswordResetService`, `JwtAccessStrategy`.
 - A global `APP_GUARD` (`JwtAccessGuard`) — **every endpoint in the application is authenticated by default**, not just this module's routes. See [Guarding Routes](#guarding-routes).
 - Exports `TokenService` only, for cases where another module needs to issue/revoke tokens directly.
 
+`EmailModule` still needs to be part of `AuthModule.forRootAsync`'s `imports` — not because `AuthModule` injects anything mail-related (it doesn't), but because the `useFactory` above runs inside the dynamic module `forRootAsync` returns, and that factory's own `inject: [ConfigService, EmailService]` needs `EmailService` to be resolvable from that module's import graph.
+
 ## Configuration
 
-`AuthModuleOptions` (see [`types/auth-module-options.type.ts`](src/types/auth-module-options.type.ts)) is provided via the async factory and injected wherever needed (`AUTH_MODULE_OPTIONS` token):
+`AuthModuleOptions` (see [`types/auth-module-options.type.ts`](src/types/auth-module-options.type.ts)) is provided via the async factory. Only `jwt` and `otpSecret` are required — everything else is an optional sub-object, and any field you omit falls back to a default from [`auth.constants.ts`](src/auth.constants.ts). The factory's return value is normalized once, at module registration time, by `resolveAuthModuleOptions` (in [`auth-module-options.resolver.ts`](src/auth-module-options.resolver.ts)) into a fully-populated `ResolvedAuthModuleOptions`, which is what's actually injected into services under the `AUTH_MODULE_OPTIONS` token.
 
-| Option | Type | Purpose |
-| --- | --- | --- |
-| `jwt.accessSecret` | `string` | HMAC secret used to sign/verify access tokens. |
-| `jwt.refreshSecret` | `string` | HMAC secret used to sign/verify refresh tokens. Must differ from `accessSecret`. |
-| `jwt.accessTtl` | `string` | Access token lifetime (e.g. `15m`), passed straight to `jsonwebtoken`'s `expiresIn`. |
-| `jwt.refreshTtl` | `string` | Refresh token lifetime (e.g. `7d`). |
-| `otpSecret` | `string` | HMAC secret used to hash OTP codes at rest (never stored in plaintext). |
-| `mail.host` | `string` | SMTP host. |
-| `mail.port` | `number` | SMTP port. |
-| `mail.user` | `string` | SMTP username. |
-| `mail.password` | `string` | SMTP password. |
-| `mail.from` | `string` | `From` address for outgoing mail. |
-| `mail.secure` | `boolean?` | Use implicit TLS (defaults to `false`, i.e. STARTTLS on 587). |
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `jwt.accessSecret` | `string` | — (required) | HMAC secret used to sign/verify access tokens. |
+| `jwt.refreshSecret` | `string` | — (required) | HMAC secret used to sign/verify refresh tokens. Must differ from `accessSecret`. |
+| `jwt.accessTtl` | `string` | — (required) | Access token lifetime (e.g. `15m`), passed straight to `jsonwebtoken`'s `expiresIn`. |
+| `jwt.refreshTtl` | `string` | — (required) | Refresh token lifetime (e.g. `7d`). |
+| `otpSecret` | `string` | — (required) | HMAC secret used to hash OTP codes at rest (never stored in plaintext). |
+| `sendOtpEmail` | `(params: { email, code, purpose }) => Promise<void>` | — (required) | Callback the host app supplies to actually deliver an OTP email. See [Extending Mail Delivery](#extending-mail-delivery). |
+| `otp.length` | `number?` | `6` | Digits in a generated OTP code. |
+| `otp.ttlMinutes` | `number?` | `10` | OTP validity window. |
+| `otp.resendCooldownSeconds` | `number?` | `30` | Minimum gap between two OTP sends for the same email+purpose. |
+| `otp.maxSendsPerWindow` | `number?` | `3` | Max OTP sends allowed within `otp.sendWindowMinutes`. |
+| `otp.sendWindowMinutes` | `number?` | `10` | Rolling window the send-count limit is measured over. |
+| `otp.maxVerifyAttempts` | `number?` | `5` | Wrong-code attempts allowed before the challenge is invalidated. |
+| `registration.sessionTtlMinutes` | `number?` | `30` | Registration session lifetime. |
+| `passwordReset.sessionTtlMinutes` | `number?` | `30` | Password reset session lifetime. |
+| `loginLockout.threshold` | `number?` | `5` | Consecutive failed password logins before lockout. |
+| `loginLockout.lockoutMinutes` | `number?` | `15` | Lockout duration once the threshold is hit. |
 
-In `apps/api`, these are sourced from environment variables (see [`config/configuration.ts`](../../../apps/api/src/config/configuration.ts)):
+Since these are read from the `useFactory` return value, any of them can be sourced from `ConfigService` the same way `jwt`/`otpSecret` already are — nothing about the shape is special-cased for `apps/api`'s current env vars. For example, to make the OTP length configurable via an `OTP_LENGTH` env var:
+
+```ts
+useFactory: (config: ConfigService) => ({
+  jwt: { /* ... */ },
+  otpSecret: config.getOrThrow<string>('otp.hashSecret'),
+  otp: { length: config.get<number>('otp.length') },
+}),
+```
+
+In `apps/api`, the required fields are currently sourced from environment variables (see [`config/configuration.ts`](../../../apps/api/src/config/configuration.ts)):
 
 | Env var | Maps to |
 | --- | --- |
@@ -102,27 +120,8 @@ In `apps/api`, these are sourced from environment variables (see [`config/config
 | `JWT_ACCESS_TTL` | `jwt.accessTtl` (default `15m`) |
 | `JWT_REFRESH_TTL` | `jwt.refreshTtl` (default `7d`) |
 | `OTP_HASH_SECRET` | `otpSecret` |
-| `SMTP_HOST` | `mail.host` |
-| `SMTP_PORT` | `mail.port` (default `587`) |
-| `SMTP_USER` | `mail.user` |
-| `SMTP_PASSWORD` | `mail.password` |
-| `SMTP_FROM` | `mail.from` |
-| `SMTP_SECURE` | `mail.secure` (`'true'` → `true`) |
 
-Tunable constants that are **not** environment-configurable live in [`auth.constants.ts`](src/auth.constants.ts):
-
-| Constant | Value | Meaning |
-| --- | --- | --- |
-| `OTP_LENGTH` | `6` | Digits in an OTP code. |
-| `OTP_TTL_MINUTES` | `10` | OTP validity window. |
-| `OTP_RESEND_COOLDOWN_SECONDS` | `30` | Minimum gap between two OTP sends for the same email+purpose. |
-| `OTP_MAX_SENDS_PER_WINDOW` | `3` | Max OTP sends allowed within `OTP_SEND_WINDOW_MINUTES`. |
-| `OTP_SEND_WINDOW_MINUTES` | `10` | Rolling window for the send-count limit. |
-| `OTP_MAX_VERIFY_ATTEMPTS` | `5` | Wrong-code attempts allowed before the challenge is invalidated. |
-| `REGISTRATION_SESSION_TTL_MINUTES` | `30` | Registration session lifetime. |
-| `PASSWORD_RESET_SESSION_TTL_MINUTES` | `30` | Password reset session lifetime. |
-| `LOGIN_LOCKOUT_THRESHOLD` | `5` | Consecutive failed password logins before lockout. |
-| `LOGIN_LOCKOUT_MINUTES` | `15` | Lockout duration once the threshold is hit. |
+SMTP env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_SECURE`) never reach `AuthModuleOptions` at all — they're read directly by `apps/api`'s `EmailModule`/`EmailService`, entirely outside the auth package. See [Extending Mail Delivery](#extending-mail-delivery).
 
 ## Data Model
 
@@ -220,10 +219,11 @@ Hashed with **Argon2id** (`argon2` package, `PasswordHasherService`). Strength i
 
 ### OTP codes
 
-- Generated with `crypto.randomInt` (`generateOtpCode`), zero-padded to `OTP_LENGTH` digits.
+- Generated with `crypto.randomInt` (`generateOtpCode`), zero-padded to `otp.length` digits (see [Configuration](#configuration)).
 - Never stored in plaintext — hashed with HMAC-SHA256 (`hashOtp`, keyed by `otpSecret`) and compared with `crypto.timingSafeEqual` (`verifyOtp` in [`utils/hmac.util.ts`](src/utils/hmac.util.ts)) to avoid timing attacks.
-- Rate-limited per `(email, purpose)`: a rolling send window (`OTP_MAX_SENDS_PER_WINDOW` per `OTP_SEND_WINDOW_MINUTES`) and a resend cooldown (`OTP_RESEND_COOLDOWN_SECONDS`) both throw `429 TooManyRequestsException` with a `retryAfterSeconds` field.
-- Verification is capped at `OTP_MAX_VERIFY_ATTEMPTS`; exceeding it (or expiry) deletes the challenge, forcing a fresh `request`.
+- Rate-limited per `(email, purpose)`: a rolling send window (`otp.maxSendsPerWindow` per `otp.sendWindowMinutes`) and a resend cooldown (`otp.resendCooldownSeconds`) both throw `429 TooManyRequestsException` with a `retryAfterSeconds` field.
+- Verification is capped at `otp.maxVerifyAttempts`; exceeding it (or expiry) deletes the challenge, forcing a fresh `request`.
+- Because `otp.length` is configurable, the verify DTOs (`RegisterVerifyEmailDto`, `LoginOtpVerifyDto`, `PasswordResetVerifyDto`) only validate that `code` is a non-empty string — the exact digit count is enforced by the hash comparison in `OtpService`, not by request validation.
 
 ### Refresh token rotation & reuse detection
 
@@ -238,7 +238,7 @@ Hashed with **Argon2id** (`argon2` package, `PasswordHasherService`). Strength i
 
 ### Login lockout
 
-`LoginLockoutService` tracks `failedAttempts` per user. On the `LOGIN_LOCKOUT_THRESHOLD`-th consecutive failure it sets `lockedUntil = now + LOGIN_LOCKOUT_MINUTES`. Any successful login clears the row entirely. Lockout is checked (`assertNotLocked`) **before** password verification on every attempt, throwing `429` with `retryAfterSeconds` while active.
+`LoginLockoutService` tracks `failedAttempts` per user. On the `loginLockout.threshold`-th consecutive failure it sets `lockedUntil = now + loginLockout.lockoutMinutes`. Any successful login clears the row entirely. Lockout is checked (`assertNotLocked`) **before** password verification on every attempt, throwing `429` with `retryAfterSeconds` while active.
 
 ### User enumeration
 
@@ -246,16 +246,26 @@ Hashed with **Argon2id** (`argon2` package, `PasswordHasherService`). Strength i
 
 ## Extending Mail Delivery
 
-Mail sending is abstracted behind `MailSender` ([`mail/mail-sender.ts`](src/mail/mail-sender.ts)), with `NodemailerMailSender` as the default SMTP-backed implementation bound in `AuthModule`. `MailService` builds OTP email content (subject/HTML per `OtpPurpose`, see [`mail/templates/otp-email.template.ts`](src/mail/templates/otp-email.template.ts)) and delegates sending to whatever `MailSender` is bound.
-
-To swap providers (e.g. a transactional email API instead of raw SMTP), provide your own class extending `MailSender` and override the binding after importing `AuthModule`:
+`@repo/auth` has **no mail code at all** — no transport, no `MailSender`/`MailMessage` types, no templates, no `nodemailer` dependency, nothing exported for the host app to implement or extend. Sending mail is infrastructure, not an auth concern, so the package doesn't model it as a class or DI token the way it might for something it actually owns. Instead, `AuthModuleOptions.sendOtpEmail` is a **plain async function** the host app hands in directly through the `forRootAsync` factory:
 
 ```ts
-{
-  provide: MailSender,
-  useClass: MyCustomMailSender,
-}
+// types/auth-module-options.type.ts
+export type SendOtpEmail = (params: {
+  email: string;
+  code: string;
+  purpose: OtpPurpose; // from @repo/database
+}) => Promise<void>;
 ```
+
+`OtpService` calls `this.options.sendOtpEmail({ email, code, purpose })` directly — there's no `MailService`, no abstract class, no provider for the host app to bind against. Nothing under `@repo/auth`'s `src/` even imports `nodemailer` or anything mail-shaped.
+
+Everything about *how* mail actually gets sent — SMTP transport, per-purpose subject/HTML templates, credentials — lives entirely in **`apps/api/src/email`**, which has no dependency on `@repo/auth` either:
+
+- [`email.module.ts`](../../../apps/api/src/email/email.module.ts) — registers and exports `EmailService`.
+- [`email.service.ts`](../../../apps/api/src/email/email.service.ts) — owns the `nodemailer` transporter (reading `mail.host` / `mail.port` / `mail.user` / `mail.password` / `mail.from` / `mail.secure` from `ConfigService`, i.e. the `SMTP_*` env vars) and exposes `sendOtpEmail(email, code, purpose)`.
+- [`email/templates/otp-email.template.ts`](../../../apps/api/src/email/templates/otp-email.template.ts) — builds the subject/HTML per `OtpPurpose`.
+
+`app.module.ts` is the only place the two packages meet: it injects `EmailService` into `AuthModule.forRootAsync`'s factory and wires `sendOtpEmail` to `emailService.sendOtpEmail.bind(...)` (see [Installation & Wiring](#installation--wiring)). To swap mail providers (e.g. a transactional email API instead of raw SMTP), change `EmailService`'s internals, or swap what `email.module.ts` provides — `@repo/auth` never needs to know or change, since all it sees is a function that resolves.
 
 ## Package Exports
 
@@ -265,7 +275,9 @@ Only the following are part of the public API surface (see [`src/index.ts`](src/
 - `Public`, `CurrentUser` decorators
 - `JwtAccessGuard`
 - `TokenService`
-- `AuthModuleOptions`, `AuthenticatedRequest`, `AuthenticatedUser` types
+- `AuthModuleOptions`, `ResolvedAuthModuleOptions`, `SendOtpEmail`, `SendOtpEmailParams`, `AuthenticatedRequest`, `AuthenticatedUser` types
+
+Notably absent: anything mail-related. There is nothing to import for that — see [Extending Mail Delivery](#extending-mail-delivery).
 
 ## Testing
 

@@ -2,6 +2,7 @@ import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { resolveAuthModuleOptions } from './auth-module-options.resolver';
 import { AUTH_MODULE_OPTIONS } from './auth.constants';
 import type { AuthModuleAsyncOptions } from './auth.module-definition';
 import { LoginController } from './controllers/login.controller';
@@ -9,9 +10,6 @@ import { PasswordResetController } from './controllers/password-reset.controller
 import { RegistrationController } from './controllers/registration.controller';
 import { TokenController } from './controllers/token.controller';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
-import { MailSender } from './mail/mail-sender';
-import { MailService } from './mail/mail.service';
-import { NodemailerMailSender } from './mail/nodemailer-mail.sender';
 import { AuthService } from './services/auth.service';
 import { LoginLockoutService } from './services/login-lockout.service';
 import { OtpService } from './services/otp.service';
@@ -26,7 +24,10 @@ export class AuthModule {
   static forRootAsync(options: AuthModuleAsyncOptions): DynamicModule {
     const optionsProvider: Provider = {
       provide: AUTH_MODULE_OPTIONS,
-      useFactory: options.useFactory,
+      useFactory: async (...args: unknown[]) => {
+        const moduleOptions = await options.useFactory(...args);
+        return resolveAuthModuleOptions(moduleOptions);
+      },
       inject: options.inject ?? [],
     };
 
@@ -45,8 +46,6 @@ export class AuthModule {
       ],
       providers: [
         optionsProvider,
-        { provide: MailSender, useClass: NodemailerMailSender },
-        MailService,
         PasswordHasherService,
         OtpService,
         LoginLockoutService,
