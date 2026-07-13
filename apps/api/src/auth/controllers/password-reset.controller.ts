@@ -8,7 +8,7 @@ import {
   PasswordResetStartDto,
   PasswordResetVerifyDto,
 } from '../dto';
-import { PasswordResetService } from '../services/password-reset.service';
+import { PasswordResetService } from '../services';
 
 @ApiTags('auth/password-reset')
 @Controller('auth/password-reset')

@@ -8,7 +8,7 @@ import type {
   AuthTokens,
   RefreshTokenPayload,
 } from '@repo/auth';
-import { hashToken } from '../utils/hmac.util';
+import { hashToken } from '../utils';
 
 @Injectable()
 export class TokenService {

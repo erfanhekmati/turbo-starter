@@ -3,17 +3,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthModule } from '@repo/auth';
 import { EmailModule } from '../email/email.module';
-import { LoginController } from './controllers/login.controller';
-import { PasswordResetController } from './controllers/password-reset.controller';
-import { RegistrationController } from './controllers/registration.controller';
-import { TokenController } from './controllers/token.controller';
-import { AuthService } from './services/auth.service';
-import { LoginLockoutService } from './services/login-lockout.service';
-import { OtpService } from './services/otp.service';
-import { PasswordHasherService } from './services/password-hasher.service';
-import { PasswordResetService } from './services/password-reset.service';
-import { RegistrationService } from './services/registration.service';
-import { TokenService } from './services/token.service';
+import {
+  LoginController,
+  PasswordResetController,
+  RegistrationController,
+  TokenController,
+} from './controllers';
+import {
+  AuthService,
+  LoginLockoutService,
+  OtpService,
+  PasswordHasherService,
+  PasswordResetService,
+  RegistrationService,
+  TokenService,
+} from './services';
 
 @Module({
   imports: [

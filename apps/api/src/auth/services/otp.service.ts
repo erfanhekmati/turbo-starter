@@ -11,8 +11,7 @@ import {
   OTP_TTL_MINUTES,
 } from '../auth.constants';
 import { TooManyRequestsException } from '../exceptions/too-many-requests.exception';
-import { hashOtp, verifyOtp as verifyOtpHash } from '../utils/hmac.util';
-import { generateOtpCode } from '../utils/otp-code.util';
+import { generateOtpCode, hashOtp, verifyOtp as verifyOtpHash } from '../utils';
 
 @Injectable()
 export class OtpService {

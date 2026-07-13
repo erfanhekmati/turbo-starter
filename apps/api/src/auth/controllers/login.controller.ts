@@ -10,7 +10,7 @@ import {
   MessageResponseDto,
   UserResponseDto,
 } from '../dto';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services';
 
 @ApiTags('auth/login')
 @Controller('auth/login')

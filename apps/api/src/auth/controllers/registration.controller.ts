@@ -10,7 +10,7 @@ import {
   RegistrationSessionResponseDto,
   UserResponseDto,
 } from '../dto';
-import { RegistrationService } from '../services/registration.service';
+import { RegistrationService } from '../services';
 
 @ApiTags('auth/register')
 @Controller('auth/register')

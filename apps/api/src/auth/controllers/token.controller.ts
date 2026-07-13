@@ -19,7 +19,7 @@ import {
   RefreshTokenResponseDto,
   UserResponseDto,
 } from '../dto';
-import { TokenService } from '../services/token.service';
+import { TokenService } from '../services';
 
 @ApiTags('auth')
 @Controller('auth')
