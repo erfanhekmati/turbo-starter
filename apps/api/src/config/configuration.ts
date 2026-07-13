@@ -1,9 +1,12 @@
 import { SwaggerThemeNameEnum } from 'swagger-themes';
 import { JwtTtl } from './enums';
 
+const int = (value: string | undefined, fallback: number): number =>
+  value ? parseInt(value, 10) : fallback;
+
 export default () => ({
   app: {
-    port: parseInt(process.env.PORT ?? '8000', 10),
+    port: int(process.env.PORT, 8000),
     version: '1.0.0',
     nodeEnv: process.env.NODE_ENV ?? 'development',
     corsOrigins: process.env.CORS_ORIGINS?.split(',').map((origin) =>
@@ -21,10 +24,28 @@ export default () => ({
   },
   otp: {
     hashSecret: process.env.OTP_HASH_SECRET,
+    length: int(process.env.OTP_LENGTH, 6),
+    ttlMinutes: int(process.env.OTP_TTL_MINUTES, 10),
+    resendCooldownSeconds: int(process.env.OTP_RESEND_COOLDOWN_SECONDS, 30),
+    maxSendsPerWindow: int(process.env.OTP_MAX_SENDS_PER_WINDOW, 3),
+    sendWindowMinutes: int(process.env.OTP_SEND_WINDOW_MINUTES, 10),
+    maxVerifyAttempts: int(process.env.OTP_MAX_VERIFY_ATTEMPTS, 5),
+  },
+  auth: {
+    registrationSessionTtlMinutes: int(
+      process.env.REGISTRATION_SESSION_TTL_MINUTES,
+      30,
+    ),
+    passwordResetSessionTtlMinutes: int(
+      process.env.PASSWORD_RESET_SESSION_TTL_MINUTES,
+      30,
+    ),
+    loginLockoutThreshold: int(process.env.LOGIN_LOCKOUT_THRESHOLD, 5),
+    loginLockoutMinutes: int(process.env.LOGIN_LOCKOUT_MINUTES, 15),
   },
   mail: {
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    port: int(process.env.SMTP_PORT, 587),
     user: process.env.SMTP_USER,
     password: process.env.SMTP_PASSWORD,
     from: process.env.SMTP_FROM,

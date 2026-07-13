@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from '@repo/database';
 import type { Transporter } from 'nodemailer';
@@ -16,6 +16,7 @@ import {
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private readonly from: string;
 
   constructor(
@@ -25,7 +26,11 @@ export class EmailService {
     this.from = this.config.getOrThrow<string>('mail.from');
   }
 
-  async sendOtpEmail(email: string, code: string, purpose: OtpPurpose): Promise<void> {
+  async sendOtpEmail(
+    email: string,
+    code: string,
+    purpose: OtpPurpose,
+  ): Promise<void> {
     await this.send({
       to: email,
       subject: otpEmailSubject(purpose),
@@ -49,7 +54,10 @@ export class EmailService {
     });
   }
 
-  async sendAccountLockedEmail(email: string, lockoutMinutes: number): Promise<void> {
+  async sendAccountLockedEmail(
+    email: string,
+    lockoutMinutes: number,
+  ): Promise<void> {
     await this.send({
       to: email,
       subject: accountLockedEmailSubject(),
@@ -57,10 +65,22 @@ export class EmailService {
     });
   }
 
-  private async send(options: { to: string; subject: string; html: string }): Promise<void> {
-    await this.transporter.sendMail({
-      from: this.from,
-      ...options,
-    });
+  private async send(options: {
+    to: string;
+    subject: string;
+    html: string;
+  }): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.from,
+        ...options,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to send email to ${options.to}: ${options.subject}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 }

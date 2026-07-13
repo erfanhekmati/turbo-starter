@@ -1,16 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   HealthCheck,
   HealthCheckService,
   PrismaHealthIndicator,
 } from '@nestjs/terminus';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '@repo/database';
-import { Public } from '../modules/auth/decorators';
+import { Public } from '../common/decorators';
 
 @ApiTags('health')
 @Controller('health')
 @Public()
+@SkipThrottle()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
@@ -20,6 +22,7 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
+  @ApiOperation({ summary: 'Liveness and database readiness check' })
   check() {
     return this.health.check([
       () => this.prismaHealth.pingCheck('database', this.prisma),

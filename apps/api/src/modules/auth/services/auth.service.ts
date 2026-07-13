@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { OtpPurpose, PrismaService, User } from '@repo/database';
@@ -55,6 +56,13 @@ export class AuthService {
       return;
     }
 
+    try {
+      await this.loginLockoutService.assertNotLocked(user.id);
+    } catch {
+      // Same silent response as unknown emails (anti-enumeration)
+      return;
+    }
+
     await this.otpService.requestOtp(email, OtpPurpose.LOGIN);
   }
 
@@ -68,9 +76,22 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired code');
     }
 
+    await this.loginLockoutService.assertNotLocked(user.id);
     await this.otpService.verifyOtp(email, OtpPurpose.LOGIN, code);
+    await this.loginLockoutService.recordSuccess(user.id);
+
     const tokens = await this.tokenService.issueTokenPair(user.id, user.email);
 
     return { tokens, user };
+  }
+
+  async getProfile(userId: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
   }
 }

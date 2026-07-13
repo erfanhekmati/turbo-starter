@@ -2,6 +2,8 @@ import {
   ArgumentsHost,
   Catch,
   ConflictException,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
@@ -9,6 +11,8 @@ import { Prisma } from '@repo/database';
 
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaClientExceptionFilter extends BaseExceptionFilter {
+  private readonly logger = new Logger(PrismaClientExceptionFilter.name);
+
   catch(
     exception: Prisma.PrismaClientKnownRequestError,
     host: ArgumentsHost,
@@ -31,7 +35,11 @@ export class PrismaClientExceptionFilter extends BaseExceptionFilter {
       case 'P2025':
         return new NotFoundException('The requested record was not found');
       default:
-        return exception;
+        this.logger.error(
+          `Unhandled Prisma error ${exception.code}: ${exception.message}`,
+          exception.stack,
+        );
+        return new InternalServerErrorException('An unexpected database error occurred');
     }
   }
 }

@@ -1,36 +1,50 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@repo/database';
-import { TooManyRequestsException } from '../exceptions';
-import { EmailService } from '../../../email/email.service';
-import { LOGIN_LOCKOUT_MINUTES, LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
+import { TooManyRequestsException } from '../../../common/exceptions';
+import { EmailService } from '../../email/email.service';
 
 @Injectable()
 export class LoginLockoutService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
     private readonly emailService: EmailService,
   ) {}
 
   async assertNotLocked(userId: string): Promise<void> {
-    const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
+    const lockout = await this.prisma.loginLockout.findUnique({
+      where: { userId },
+    });
     const now = new Date();
 
     if (lockout?.lockedUntil && lockout.lockedUntil > now) {
       throw new TooManyRequestsException(
         'Account temporarily locked due to too many failed attempts',
-        Math.max(1, Math.ceil((lockout.lockedUntil.getTime() - now.getTime()) / 1000)),
+        Math.max(
+          1,
+          Math.ceil((lockout.lockedUntil.getTime() - now.getTime()) / 1000),
+        ),
       );
     }
   }
 
   async recordFailure(userId: string): Promise<void> {
-    const lockout = await this.prisma.loginLockout.findUnique({ where: { userId } });
+    const lockout = await this.prisma.loginLockout.findUnique({
+      where: { userId },
+    });
     const now = new Date();
     const wasLocked = Boolean(lockout?.lockedUntil && lockout.lockedUntil > now);
     const failedAttempts = (lockout?.failedAttempts ?? 0) + 1;
+    const threshold = this.config.getOrThrow<number>(
+      'auth.loginLockoutThreshold',
+    );
+    const lockoutMinutes = this.config.getOrThrow<number>(
+      'auth.loginLockoutMinutes',
+    );
     const lockedUntil =
-      failedAttempts >= LOGIN_LOCKOUT_THRESHOLD
-        ? new Date(Date.now() + LOGIN_LOCKOUT_MINUTES * 60_000)
+      failedAttempts >= threshold
+        ? new Date(Date.now() + lockoutMinutes * 60_000)
         : null;
 
     await this.prisma.loginLockout.upsert({
@@ -46,7 +60,10 @@ export class LoginLockoutService {
       });
 
       if (user) {
-        await this.emailService.sendAccountLockedEmail(user.email, LOGIN_LOCKOUT_MINUTES);
+        await this.emailService.sendAccountLockedEmail(
+          user.email,
+          lockoutMinutes,
+        );
       }
     }
   }

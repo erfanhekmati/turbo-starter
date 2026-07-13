@@ -1,26 +1,30 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
-import { Public } from '../decorators';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Public } from '../../../common/decorators';
 import {
   AuthTokensResponseDto,
   LoginOtpStartDto,
   LoginOtpVerifyDto,
   LoginPasswordDto,
   MessageResponseDto,
-  UserResponseDto,
+  toUserResponseDto,
 } from '../dto';
 import { AuthService } from '../services';
 
 @ApiTags('auth/login')
 @Controller('auth/login')
 @Public()
+@Throttle({ default: { limit: 5, ttl: 60_000 } })
 export class LoginController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('password')
   @HttpCode(HttpStatus.OK)
-  async loginWithPassword(@Body() dto: LoginPasswordDto): Promise<AuthTokensResponseDto> {
+  @ApiOperation({ summary: 'Sign in with email and password' })
+  async loginWithPassword(
+    @Body() dto: LoginPasswordDto,
+  ): Promise<AuthTokensResponseDto> {
     const { tokens, user } = await this.authService.loginWithPassword(
       dto.email,
       dto.password,
@@ -28,27 +32,37 @@ export class LoginController {
 
     return {
       ...tokens,
-      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
+      user: toUserResponseDto(user),
     };
   }
 
   @Post('otp/start')
   @HttpCode(HttpStatus.OK)
-  async startOtpLogin(@Body() dto: LoginOtpStartDto): Promise<MessageResponseDto> {
+  @ApiOperation({ summary: 'Request a one-time login code' })
+  async startOtpLogin(
+    @Body() dto: LoginOtpStartDto,
+  ): Promise<MessageResponseDto> {
     await this.authService.startOtpLogin(dto.email);
     return {
-      message: 'If an account exists for this email, a verification code has been sent.',
+      message:
+        'If an account exists for this email, a verification code has been sent.',
     };
   }
 
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
-  async verifyOtpLogin(@Body() dto: LoginOtpVerifyDto): Promise<AuthTokensResponseDto> {
-    const { tokens, user } = await this.authService.verifyOtpLogin(dto.email, dto.code);
+  @ApiOperation({ summary: 'Verify a one-time login code' })
+  async verifyOtpLogin(
+    @Body() dto: LoginOtpVerifyDto,
+  ): Promise<AuthTokensResponseDto> {
+    const { tokens, user } = await this.authService.verifyOtpLogin(
+      dto.email,
+      dto.code,
+    );
 
     return {
       ...tokens,
-      user: plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true }),
+      user: toUserResponseDto(user),
     };
   }
 }

@@ -14,5 +14,6 @@ export * from './register-complete.dto';
 export * from './register-start.dto';
 export * from './register-verify-email.dto';
 export * from './registration-session.response.dto';
+export * from './to-user-response.dto';
 export * from './user.response.dto';
 export * from './validators/is-equal-to.decorator';

@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OtpPurpose, PasswordResetStep, PrismaService } from '@repo/database';
-import { EmailService } from '../../../email/email.service';
-import { PASSWORD_RESET_SESSION_TTL_MINUTES } from '../auth.constants';
+import { EmailService } from '../../email/email.service';
+import { isExpired, sessionExpiresAt } from '../utils';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
@@ -10,6 +11,7 @@ import { TokenService } from './token.service';
 export class PasswordResetService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
@@ -17,13 +19,15 @@ export class PasswordResetService {
   ) {}
 
   async start(email: string): Promise<string> {
-    const sessionTtlMs = PASSWORD_RESET_SESSION_TTL_MINUTES * 60_000;
+    const ttlMinutes = this.config.getOrThrow<number>(
+      'auth.passwordResetSessionTtlMinutes',
+    );
     const session = await this.prisma.passwordResetSession.upsert({
       where: { email },
-      create: { email, expiresAt: new Date(Date.now() + sessionTtlMs) },
+      create: { email, expiresAt: sessionExpiresAt(ttlMinutes) },
       update: {
         step: PasswordResetStep.PENDING_VERIFICATION,
-        expiresAt: new Date(Date.now() + sessionTtlMs),
+        expiresAt: sessionExpiresAt(ttlMinutes),
       },
     });
 
@@ -39,7 +43,11 @@ export class PasswordResetService {
   async verifyOtp(resetId: string, code: string): Promise<string> {
     const session = await this.getActiveSession(resetId);
 
-    await this.otpService.verifyOtp(session.email, OtpPurpose.PASSWORD_RESET, code);
+    await this.otpService.verifyOtp(
+      session.email,
+      OtpPurpose.PASSWORD_RESET,
+      code,
+    );
 
     await this.prisma.passwordResetSession.update({
       where: { id: session.id },
@@ -56,7 +64,9 @@ export class PasswordResetService {
       throw new BadRequestException('Code has not been verified yet');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { email: session.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: session.email },
+    });
 
     if (!user) {
       throw new BadRequestException('Invalid or expired reset session');
@@ -78,7 +88,7 @@ export class PasswordResetService {
       where: { id: resetId },
     });
 
-    if (!session || session.expiresAt < new Date()) {
+    if (!session || isExpired(session.expiresAt)) {
       throw new BadRequestException('Invalid or expired reset session');
     }
 

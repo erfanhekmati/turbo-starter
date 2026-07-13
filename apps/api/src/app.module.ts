@@ -2,17 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { join } from 'node:path';
 import { DatabaseModule } from '@repo/database';
 import { AuthModule } from './modules/auth/auth.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
-import { EmailModule } from './email/email.module';
+import { EmailModule } from './modules/email/email.module';
 import { HealthModule } from './health/health.module';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter';
-
-const packageRoot = join(__dirname, '..');
-const monorepoRoot = join(packageRoot, '..', '..');
+import { TooManyRequestsExceptionFilter } from './common/filters/too-many-requests.filter';
 
 @Module({
   imports: [
@@ -28,7 +25,7 @@ const monorepoRoot = join(packageRoot, '..', '..');
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connectionString: config.getOrThrow<string>('DATABASE_URL'),
+        connectionString: config.getOrThrow<string>('database.url'),
       }),
     }),
     EmailModule,
@@ -38,6 +35,7 @@ const monorepoRoot = join(packageRoot, '..', '..');
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: PrismaClientExceptionFilter },
+    { provide: APP_FILTER, useClass: TooManyRequestsExceptionFilter },
   ],
 })
 export class AppModule {}

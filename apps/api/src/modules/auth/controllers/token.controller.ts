@@ -4,22 +4,22 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { PrismaService } from '@repo/database';
-import { plainToInstance } from 'class-transformer';
-import { CurrentRefreshToken, CurrentUser, Public } from '../decorators';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { Public } from '../../../common/decorators';
+import { CurrentRefreshToken, CurrentUser } from '../decorators';
 import {
   LogoutDto,
   RefreshTokenDto,
   RefreshTokenResponseDto,
+  toUserResponseDto,
   UserResponseDto,
 } from '../dto';
 import { JwtRefreshGuard } from '../guards';
-import { TokenService } from '../services';
+import { AuthService, TokenService } from '../services';
 import type { AuthenticatedUser, RefreshTokenPayload } from '../types';
 
 @ApiTags('auth')
@@ -27,13 +27,15 @@ import type { AuthenticatedUser, RefreshTokenPayload } from '../types';
 export class TokenController {
   constructor(
     private readonly tokenService: TokenService,
-    private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
   ) {}
 
   @Public()
   @UseGuards(JwtRefreshGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('token/refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rotate refresh token and issue a new token pair' })
   async refresh(
     @Body() dto: RefreshTokenDto,
     @CurrentRefreshToken() payload: RefreshTokenPayload,
@@ -43,21 +45,21 @@ export class TokenController {
 
   @Public()
   @UseGuards(JwtRefreshGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('token/logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke the current refresh token' })
   async logout(@Body() dto: LogoutDto): Promise<void> {
     await this.tokenService.revokeRefreshToken(dto.refreshToken);
   }
 
   @ApiBearerAuth()
   @Get('me')
-  async me(@CurrentUser() currentUser: AuthenticatedUser): Promise<UserResponseDto> {
-    const user = await this.prisma.user.findUnique({ where: { id: currentUser.id } });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return plainToInstance(UserResponseDto, user, { excludeExtraneousValues: true });
+  @ApiOperation({ summary: 'Get the authenticated user profile' })
+  async me(
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ): Promise<UserResponseDto> {
+    const user = await this.authService.getProfile(currentUser.id);
+    return toUserResponseDto(user);
   }
 }

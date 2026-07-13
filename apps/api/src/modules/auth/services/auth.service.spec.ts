@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
-import { PrismaService, User } from '@repo/database';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { OtpPurpose, PrismaService, User } from '@repo/database';
+import { TooManyRequestsException } from '../../../common/exceptions';
 import { AuthService } from './auth.service';
 import { LoginLockoutService } from './login-lockout.service';
 import { OtpService } from './otp.service';
@@ -16,6 +21,7 @@ describe('AuthService', () => {
     recordFailure: jest.Mock;
     recordSuccess: jest.Mock;
   };
+  let otpService: { requestOtp: jest.Mock; verifyOtp: jest.Mock };
   let tokenService: { issueTokenPair: jest.Mock };
 
   const user = {
@@ -32,6 +38,7 @@ describe('AuthService', () => {
       recordFailure: jest.fn(),
       recordSuccess: jest.fn(),
     };
+    otpService = { requestOtp: jest.fn(), verifyOtp: jest.fn() };
     tokenService = { issueTokenPair: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -41,7 +48,7 @@ describe('AuthService', () => {
         { provide: PasswordHasherService, useValue: passwordHasher },
         { provide: LoginLockoutService, useValue: loginLockoutService },
         { provide: TokenService, useValue: tokenService },
-        { provide: OtpService, useValue: {} },
+        { provide: OtpService, useValue: otpService },
       ],
     }).compile();
 
@@ -90,6 +97,83 @@ describe('AuthService', () => {
         refreshToken: 'refresh',
       });
       expect(result.user).toEqual(user);
+    });
+  });
+
+  describe('startOtpLogin', () => {
+    it('returns silently when the user does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await authService.startOtpLogin(user.email);
+
+      expect(otpService.requestOtp).not.toHaveBeenCalled();
+    });
+
+    it('returns silently when the account is locked', async () => {
+      prisma.user.findUnique.mockResolvedValue(user);
+      loginLockoutService.assertNotLocked.mockRejectedValue(
+        new TooManyRequestsException('locked', 60),
+      );
+
+      await authService.startOtpLogin(user.email);
+
+      expect(otpService.requestOtp).not.toHaveBeenCalled();
+    });
+
+    it('requests an OTP when the account is unlocked', async () => {
+      prisma.user.findUnique.mockResolvedValue(user);
+
+      await authService.startOtpLogin(user.email);
+
+      expect(otpService.requestOtp).toHaveBeenCalledWith(
+        user.email,
+        OtpPurpose.LOGIN,
+      );
+    });
+  });
+
+  describe('verifyOtpLogin', () => {
+    it('asserts lockout, verifies OTP, clears failures, and issues tokens', async () => {
+      prisma.user.findUnique.mockResolvedValue(user);
+      tokenService.issueTokenPair.mockResolvedValue({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+      });
+
+      const result = await authService.verifyOtpLogin(user.email, '123456');
+
+      expect(loginLockoutService.assertNotLocked).toHaveBeenCalledWith(user.id);
+      expect(otpService.verifyOtp).toHaveBeenCalledWith(
+        user.email,
+        OtpPurpose.LOGIN,
+        '123456',
+      );
+      expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(user.id);
+      expect(result.user).toEqual(user);
+    });
+
+    it('throws BadRequestException when the user does not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        authService.verifyOtpLogin(user.email, '123456'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getProfile', () => {
+    it('returns the user when found', async () => {
+      prisma.user.findUnique.mockResolvedValue(user);
+
+      await expect(authService.getProfile(user.id)).resolves.toEqual(user);
+    });
+
+    it('throws NotFoundException when missing', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(authService.getProfile(user.id)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

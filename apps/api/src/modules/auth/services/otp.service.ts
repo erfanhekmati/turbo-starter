@@ -1,20 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { generateOtpCode, hashOtp, verifyOtp as verifyOtpHash } from '@repo/backend-utils';
 import { OtpPurpose, PrismaService } from '@repo/database';
-import { EmailService } from '../../../email/email.service';
-import { TooManyRequestsException } from '../exceptions';
-import { generateOtpCode, hashOtp, verifyOtp as verifyOtpHash } from '../utils';
-import {
-  OTP_LENGTH,
-  OTP_MAX_SENDS_PER_WINDOW,
-  OTP_MAX_VERIFY_ATTEMPTS,
-  OTP_RESEND_COOLDOWN_SECONDS,
-  OTP_SEND_WINDOW_MINUTES,
-  OTP_TTL_MINUTES,
-} from '../auth.constants';
+import { TooManyRequestsException } from '../../../common/exceptions';
+import { EmailService } from '../../email/email.service';
 
 @Injectable()
 export class OtpService {
+  private readonly logger = new Logger(OtpService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
@@ -34,10 +28,16 @@ export class OtpService {
       );
     }
 
-    const sendWindowMs = OTP_SEND_WINDOW_MINUTES * 60_000;
-    const { windowStartAt, sentCount } = this.nextWindow(existing, now, sendWindowMs);
+    const sendWindowMs =
+      this.config.getOrThrow<number>('otp.sendWindowMinutes') * 60_000;
+    const maxSends = this.config.getOrThrow<number>('otp.maxSendsPerWindow');
+    const { windowStartAt, sentCount } = this.nextWindow(
+      existing,
+      now,
+      sendWindowMs,
+    );
 
-    if (sentCount > OTP_MAX_SENDS_PER_WINDOW) {
+    if (sentCount > maxSends) {
       const windowEndsAt = new Date(windowStartAt.getTime() + sendWindowMs);
       throw new TooManyRequestsException(
         'Too many code requests, please try again later',
@@ -46,10 +46,15 @@ export class OtpService {
     }
 
     const otpSecret = this.config.getOrThrow<string>('otp.hashSecret');
-    const code = generateOtpCode(OTP_LENGTH);
+    const code = generateOtpCode(this.config.getOrThrow<number>('otp.length'));
     const codeHash = hashOtp(code, otpSecret);
-    const expiresAt = new Date(now.getTime() + OTP_TTL_MINUTES * 60_000);
-    const resendAvailableAt = new Date(now.getTime() + OTP_RESEND_COOLDOWN_SECONDS * 1000);
+    const expiresAt = new Date(
+      now.getTime() + this.config.getOrThrow<number>('otp.ttlMinutes') * 60_000,
+    );
+    const resendAvailableAt = new Date(
+      now.getTime() +
+        this.config.getOrThrow<number>('otp.resendCooldownSeconds') * 1000,
+    );
 
     await this.prisma.otpChallenge.upsert({
       where: { email_purpose: { email, purpose } },
@@ -72,7 +77,18 @@ export class OtpService {
       },
     });
 
-    await this.emailService.sendOtpEmail(email, code, purpose);
+    try {
+      await this.emailService.sendOtpEmail(email, code, purpose);
+    } catch (error) {
+      await this.prisma.otpChallenge.delete({
+        where: { email_purpose: { email, purpose } },
+      });
+      this.logger.error(
+        `Failed to send OTP email to ${email} for ${purpose}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 
   async verifyOtp(email: string, purpose: OtpPurpose, code: string): Promise<void> {
@@ -85,8 +101,9 @@ export class OtpService {
     }
 
     const now = new Date();
+    const maxAttempts = this.config.getOrThrow<number>('otp.maxVerifyAttempts');
 
-    if (challenge.expiresAt < now || challenge.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+    if (challenge.expiresAt < now || challenge.attempts >= maxAttempts) {
       await this.prisma.otpChallenge.delete({ where: { id: challenge.id } });
       throw new BadRequestException('Invalid or expired code');
     }

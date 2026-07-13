@@ -1,1 +1,1 @@
-export * from './too-many-requests.exception';
+export { TooManyRequestsException } from '../../../common/exceptions';

@@ -96,9 +96,6 @@ importers:
       '@nestjs/testing':
         specifier: ^11.0.1
         version: 11.1.18(@nestjs/common@11.1.18(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.18)(@nestjs/platform-express@11.1.18)
-      '@repo/backend-types':
-        specifier: workspace:*
-        version: link:../../packages/server/types
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/common/eslint-config
@@ -393,6 +390,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../common/typescript-config
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.17
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

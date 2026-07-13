@@ -1,8 +1,10 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OtpPurpose, PrismaService, RegistrationStep, User } from '@repo/database';
 import type { AuthTokens } from '../types';
-import { EmailService } from '../../../email/email.service';
-import { REGISTRATION_SESSION_TTL_MINUTES } from '../auth.constants';
+import { EmailService } from '../../email/email.service';
+import { isExpired, sessionExpiresAt } from '../utils';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
@@ -11,6 +13,7 @@ import { TokenService } from './token.service';
 export class RegistrationService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
@@ -21,20 +24,26 @@ export class RegistrationService {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      throw new ConflictException('Email is already registered');
+      // Opaque id — same response shape, no OTP sent (anti-enumeration)
+      return randomUUID();
     }
 
-    const sessionTtlMs = REGISTRATION_SESSION_TTL_MINUTES * 60_000;
+    const ttlMinutes = this.config.getOrThrow<number>(
+      'auth.registrationSessionTtlMinutes',
+    );
     const session = await this.prisma.registrationSession.upsert({
       where: { email },
-      create: { email, expiresAt: new Date(Date.now() + sessionTtlMs) },
+      create: { email, expiresAt: sessionExpiresAt(ttlMinutes) },
       update: {
         step: RegistrationStep.EMAIL_PENDING_VERIFICATION,
-        expiresAt: new Date(Date.now() + sessionTtlMs),
+        expiresAt: sessionExpiresAt(ttlMinutes),
       },
     });
 
-    await this.otpService.requestOtp(email, OtpPurpose.REGISTRATION_EMAIL_VERIFICATION);
+    await this.otpService.requestOtp(
+      email,
+      OtpPurpose.REGISTRATION_EMAIL_VERIFICATION,
+    );
 
     return session.id;
   }
@@ -95,7 +104,7 @@ export class RegistrationService {
       where: { id: registrationId },
     });
 
-    if (!session || session.expiresAt < new Date()) {
+    if (!session || isExpired(session.expiresAt)) {
       throw new BadRequestException('Invalid or expired registration session');
     }
 
