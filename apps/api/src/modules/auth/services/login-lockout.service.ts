@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TooManyRequestsException } from '@repo/auth';
 import { PrismaService } from '@repo/database';
-import { EmailService } from '../../email/email.service';
+import { EmailService } from '../../../email/email.service';
 import { LOGIN_LOCKOUT_MINUTES, LOGIN_LOCKOUT_THRESHOLD } from '../auth.constants';
 
 @Injectable()

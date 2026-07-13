@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthModule } from '@repo/auth';
-import { EmailModule } from '../email/email.module';
 import {
   LoginController,
   PasswordResetController,
@@ -21,7 +20,6 @@ import {
 
 @Module({
   imports: [
-    EmailModule,
     JwtModule.register({}),
     JwtAuthModule.forRootAsync({
       imports: [ConfigModule],
@@ -49,4 +47,4 @@ import {
   ],
   exports: [TokenService],
 })
-export class AuthModule {}
+export class AuthModule { }

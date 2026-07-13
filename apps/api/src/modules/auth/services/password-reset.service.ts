@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { OtpPurpose, PasswordResetStep, PrismaService } from '@repo/database';
-import { EmailService } from '../../email/email.service';
+import { EmailService } from '../../../email/email.service';
 import { PASSWORD_RESET_SESSION_TTL_MINUTES } from '../auth.constants';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';

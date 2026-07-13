@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createTransport } from 'nodemailer';
 import { MAIL_TRANSPORTER } from './email.constants';
 import { EmailService } from './email.service';
 
+@Global()
 @Module({
   providers: [
     {
@@ -24,4 +25,4 @@ import { EmailService } from './email.service';
   ],
   exports: [EmailService],
 })
-export class EmailModule {}
+export class EmailModule { }

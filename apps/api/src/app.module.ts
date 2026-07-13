@@ -4,7 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { join } from 'node:path';
 import { DatabaseModule } from '@repo/database';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import configuration from './config/configuration';
 import { validate } from './config/env.validation';
 import { EmailModule } from './email/email.module';

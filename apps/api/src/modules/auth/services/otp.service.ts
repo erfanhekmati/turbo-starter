@@ -7,7 +7,7 @@ import {
   verifyOtp as verifyOtpHash,
 } from '@repo/auth';
 import { OtpPurpose, PrismaService } from '@repo/database';
-import { EmailService } from '../../email/email.service';
+import { EmailService } from '../../../email/email.service';
 import {
   OTP_LENGTH,
   OTP_MAX_SENDS_PER_WINDOW,
