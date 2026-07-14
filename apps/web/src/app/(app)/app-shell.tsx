@@ -9,6 +9,7 @@ import {
   ProfileMenuSkeleton,
   ScrollArea,
   SidebarNav,
+  ThemeToggle,
   toast,
   useSidebarCollapsed,
 } from '@repo/ui';
@@ -80,16 +81,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           }
           actions={
-            isUserLoading ? (
-              <ProfileMenuSkeleton />
-            ) : user ? (
-              <ProfileMenu
-                name={displayName || user.email}
-                email={user.email}
-                role={user.roles.length > 0 ? user.roles.join(', ') : undefined}
-                onLogout={handleLogout}
-              />
-            ) : null
+            <>
+              <ThemeToggle />
+              {isUserLoading ? (
+                <ProfileMenuSkeleton />
+              ) : user ? (
+                <ProfileMenu
+                  name={displayName || user.email}
+                  email={user.email}
+                  role={user.roles.length > 0 ? user.roles.join(', ') : undefined}
+                  onLogout={handleLogout}
+                />
+              ) : null}
+            </>
           }
         />
         <main className="min-h-0 flex-1">
