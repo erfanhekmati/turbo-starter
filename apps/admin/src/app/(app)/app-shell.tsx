@@ -9,6 +9,7 @@ import {
   ScrollArea,
   SidebarNav,
   toast,
+  useSidebarCollapsed,
 } from '@repo/ui';
 import {
   FileText,
@@ -24,6 +25,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: user } = useCurrentUser();
+  const [collapsed, setCollapsed] = useSidebarCollapsed({
+    storageKey: 'admin-sidebar-collapsed',
+  });
 
   async function handleLogout() {
     try {
@@ -82,30 +86,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : '';
 
   return (
-    <div className="flex h-svh flex-col">
-      <Navbar
+    <div className="flex h-svh">
+      <SidebarNav
         logo={<Link href="/dashboard">Turbo Starter Admin</Link>}
-        actions={
-          user ? (
-            <ProfileMenu
-              name={displayName || user.email}
-              email={user.email}
-              role={user.roles.length > 0 ? user.roles.join(', ') : undefined}
-              onSettings={() => router.push('/settings')}
-              onLogout={handleLogout}
-            />
-          ) : null
-        }
+        items={items}
+        collapsed={collapsed}
+        onCollapsedChange={setCollapsed}
+        storageKey={null}
+        renderLink={(item, content) => (
+          <Link key={item.href} href={item.href}>
+            {content}
+          </Link>
+        )}
       />
-      <div className="flex min-h-0 flex-1 items-stretch">
-        <SidebarNav
-          items={items}
-          storageKey="admin-sidebar-collapsed"
-          renderLink={(item, content) => (
-            <Link key={item.href} href={item.href}>
-              {content}
-            </Link>
-          )}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <Navbar
+          actions={
+            user ? (
+              <ProfileMenu
+                name={displayName || user.email}
+                email={user.email}
+                role={user.roles.length > 0 ? user.roles.join(', ') : undefined}
+                onSettings={() => router.push('/settings')}
+                onLogout={handleLogout}
+              />
+            ) : null
+          }
         />
         <main className="min-h-0 flex-1">
           <ScrollArea className="h-full">

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { PanelLeftCloseIcon, PanelLeftIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -23,6 +23,8 @@ type SidebarNavItem = {
 
 type SidebarNavProps = {
   items: SidebarNavItem[]
+  /** Brand/logo shown in the sidebar top bar. */
+  logo?: React.ReactNode
   header?: React.ReactNode
   footer?: React.ReactNode
   className?: string
@@ -38,17 +40,17 @@ type SidebarNavProps = {
   storageKey?: string | null
 }
 
-function useCollapsedState({
+function useSidebarCollapsed({
   collapsed: collapsedProp,
   defaultCollapsed = false,
   onCollapsedChange,
-  storageKey,
+  storageKey = DEFAULT_STORAGE_KEY,
 }: {
   collapsed?: boolean
   defaultCollapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
-  storageKey: string | null
-}) {
+  storageKey?: string | null
+} = {}) {
   const isControlled = collapsedProp !== undefined
   const [uncontrolled, setUncontrolled] = React.useState(defaultCollapsed)
 
@@ -82,8 +84,37 @@ function useCollapsedState({
   return [collapsed, setCollapsed] as const
 }
 
+function SidebarCollapseToggle({
+  collapsed,
+  onCollapsedChange,
+  className,
+}: {
+  collapsed: boolean
+  onCollapsedChange: (collapsed: boolean) => void
+  className?: string
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      aria-expanded={!collapsed}
+      onClick={() => onCollapsedChange(!collapsed)}
+      className={className}
+    >
+      {collapsed ? (
+        <PanelLeftIcon className="size-4" />
+      ) : (
+        <PanelLeftCloseIcon className="size-4" />
+      )}
+    </Button>
+  )
+}
+
 function SidebarNav({
   items,
+  logo,
   header,
   footer,
   className,
@@ -94,7 +125,7 @@ function SidebarNav({
   onCollapsedChange,
   storageKey = DEFAULT_STORAGE_KEY,
 }: SidebarNavProps) {
-  const [collapsed, setCollapsed] = useCollapsedState({
+  const [collapsed, setCollapsed] = useSidebarCollapsed({
     collapsed: collapsedProp,
     defaultCollapsed,
     onCollapsedChange,
@@ -107,85 +138,98 @@ function SidebarNav({
     <aside
       data-collapsed={showCollapsed || undefined}
       className={cn(
-        "relative flex min-h-0 shrink-0 flex-col gap-4 self-stretch border-r bg-background transition-[width,padding] duration-200 ease-in-out",
-        showCollapsed ? "w-16 p-2" : "w-64 p-4",
+        "flex min-h-0 shrink-0 flex-col self-stretch overflow-hidden border-r bg-background transition-[width] duration-200 ease-in-out",
+        showCollapsed ? "w-16" : "w-64",
         className
       )}
     >
-      {header && !showCollapsed ? header : null}
-
-      <ScrollArea className="min-h-0 flex-1 overflow-hidden">
-        <nav
+      {(logo || collapsible) && (
+        <div
           className={cn(
-            "flex flex-col gap-1",
-            showCollapsed ? "items-center" : "pr-3"
+            "flex h-14 shrink-0 items-center border-b px-3",
+            showCollapsed ? "justify-center" : "gap-2"
           )}
         >
-          {items.map((item) => {
-            const content = (
-              <span
-                className={cn(
-                  "flex items-center rounded-md text-sm font-medium transition-colors",
-                  showCollapsed
-                    ? "size-9 justify-center"
-                    : "gap-2 px-3 py-2",
-                  item.active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                )}
-              >
-                {item.icon}
-                {!showCollapsed && item.label}
-              </span>
-            )
-
-            const linked = renderLink ? (
-              renderLink(item, content)
-            ) : (
-              <a href={item.href}>{content}</a>
-            )
-
-            if (!showCollapsed) {
-              return (
-                <React.Fragment key={item.href}>{linked}</React.Fragment>
-              )
-            }
-
-            return (
-              <Tooltip key={item.href}>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">{linked}</span>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            )
-          })}
-        </nav>
-      </ScrollArea>
-
-      {footer && !showCollapsed ? footer : null}
-
-      {collapsible && (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-xs"
-          aria-label={showCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!showCollapsed}
-          onClick={() => setCollapsed(!showCollapsed)}
-          className="absolute top-1/2 -right-3 z-20 size-6 -translate-y-1/2 rounded-full border bg-background shadow-sm hover:bg-accent"
-        >
-          {showCollapsed ? (
-            <ChevronRightIcon className="size-3.5" />
-          ) : (
-            <ChevronLeftIcon className="size-3.5" />
+          {logo && !showCollapsed && (
+            <div className="min-w-0 flex-1 truncate font-semibold">{logo}</div>
           )}
-        </Button>
+          {collapsible && (
+            <SidebarCollapseToggle
+              collapsed={showCollapsed}
+              onCollapsedChange={setCollapsed}
+            />
+          )}
+        </div>
       )}
+
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col gap-4 overflow-hidden",
+          showCollapsed ? "p-2" : "p-4"
+        )}
+      >
+        {header && !showCollapsed ? header : null}
+
+        <ScrollArea className="min-h-0 flex-1">
+          <nav
+            className={cn(
+              "flex flex-col gap-1",
+              showCollapsed ? "items-center" : "pr-3"
+            )}
+          >
+            {items.map((item) => {
+              const content = (
+                <span
+                  className={cn(
+                    "flex items-center rounded-md text-sm font-medium transition-colors",
+                    showCollapsed
+                      ? "size-9 justify-center"
+                      : "gap-2 px-3 py-2",
+                    item.active
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {item.icon}
+                  {!showCollapsed && item.label}
+                </span>
+              )
+
+              const linked = renderLink ? (
+                renderLink(item, content)
+              ) : (
+                <a href={item.href}>{content}</a>
+              )
+
+              if (!showCollapsed) {
+                return (
+                  <React.Fragment key={item.href}>{linked}</React.Fragment>
+                )
+              }
+
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">{linked}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </nav>
+        </ScrollArea>
+
+        {footer && !showCollapsed ? footer : null}
+      </div>
     </aside>
   )
 }
 
-export { SidebarNav, type SidebarNavItem }
+export {
+  SidebarNav,
+  SidebarCollapseToggle,
+  useSidebarCollapsed,
+  type SidebarNavItem,
+}
