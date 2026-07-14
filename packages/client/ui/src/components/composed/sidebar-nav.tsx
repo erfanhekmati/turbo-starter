@@ -175,7 +175,7 @@ function SidebarNav({
               const content = (
                 <span
                   className={cn(
-                    "flex items-center rounded-md text-sm font-medium transition-colors",
+                    "flex cursor-pointer items-center rounded-md text-sm font-medium transition-colors",
                     showCollapsed ? "size-9 justify-center" : "gap-2 px-3 py-2",
                     item.active
                       ? "bg-accent text-accent-foreground"
