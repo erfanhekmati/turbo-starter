@@ -56,6 +56,7 @@ import {
   SettingsMenu,
   Skeleton,
   StatisticsCard,
+  Steps,
   Tabs,
   TabsContent,
   TabsList,
@@ -424,6 +425,18 @@ export default function DesignSystemPage() {
           <AvatarWithStatus name="Sam Lee" status="away" />
           <AvatarWithStatus name="No Image" status="offline" />
         </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Steps</h2>
+        <Steps
+          steps={[
+            { label: "Email", description: "Enter your address" },
+            { label: "Verify", description: "Confirm the code" },
+            { label: "Complete", description: "Set your details" },
+          ]}
+          currentStep={1}
+        />
       </section>
 
       <section className="space-y-3">

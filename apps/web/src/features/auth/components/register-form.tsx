@@ -24,6 +24,7 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
+  Steps,
   toast,
 } from '@repo/ui';
 import { useState } from 'react';
@@ -31,6 +32,9 @@ import { ApiError } from '@repo/api-client';
 import { getApiClient } from '@/lib/api';
 
 type Step = 'email' | 'verify' | 'complete';
+
+const STEPS = ['Email', 'Verify', 'Complete'];
+const STEP_INDEX: Record<Step, number> = { email: 0, verify: 1, complete: 2 };
 
 export function RegisterForm() {
   const router = useRouter();
@@ -100,11 +104,9 @@ export function RegisterForm() {
 
   return (
     <div className="mx-auto w-full max-w-md space-y-6">
-      <div className="space-y-2 text-center">
+      <div className="space-y-4 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-        <p className="text-sm text-muted-foreground">
-          Step {step === 'email' ? 1 : step === 'verify' ? 2 : 3} of 3
-        </p>
+        <Steps steps={STEPS} currentStep={STEP_INDEX[step]} />
       </div>
 
       {step === 'email' ? (

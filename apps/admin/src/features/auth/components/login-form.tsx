@@ -91,9 +91,6 @@ export function LoginForm() {
     <div className="mx-auto w-full max-w-md space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Admin sign in</h1>
-        <p className="text-sm text-muted-foreground">
-          Use your password, then complete TOTP if your role requires it
-        </p>
       </div>
 
       {mode === 'password' ? (
