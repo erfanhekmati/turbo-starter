@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createTransport } from 'nodemailer';
 import { MAIL_TRANSPORTER } from './email.constants';
 import { EmailService } from './email.service';
+import { createMockTransporter } from './mock-mail.transporter';
 
 @Global()
 @Module({
@@ -10,8 +11,15 @@ import { EmailService } from './email.service';
     {
       provide: MAIL_TRANSPORTER,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        createTransport({
+      useFactory: (config: ConfigService) => {
+        const isProduction =
+          config.getOrThrow<string>('app.nodeEnv') === 'production';
+
+        if (!isProduction) {
+          return createMockTransporter();
+        }
+
+        return createTransport({
           host: config.getOrThrow<string>('mail.host'),
           port: config.getOrThrow<number>('mail.port'),
           secure: config.get<boolean>('mail.secure') ?? false,
@@ -19,7 +27,8 @@ import { EmailService } from './email.service';
             user: config.getOrThrow<string>('mail.user'),
             pass: config.getOrThrow<string>('mail.password'),
           },
-        }),
+        });
+      },
     },
     EmailService,
   ],
