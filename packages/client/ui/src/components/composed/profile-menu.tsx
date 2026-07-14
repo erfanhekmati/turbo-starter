@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
+import * as React from "react";
+import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { Badge } from "../ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,25 +13,25 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu"
+} from "../ui/dropdown-menu";
 
 type ProfileMenuItem = {
-  label: string
-  icon?: React.ReactNode
-  onSelect: () => void
-  variant?: "default" | "destructive"
-}
+  label: string;
+  icon?: React.ReactNode;
+  onSelect: () => void;
+  variant?: "default" | "destructive";
+};
 
 type ProfileMenuProps = {
-  name: string
-  email?: string
-  role?: string
-  avatarUrl?: string
-  items?: ProfileMenuItem[]
-  onProfile?: () => void
-  onSettings?: () => void
-  onLogout?: () => void
-}
+  name: string;
+  email?: string;
+  role?: string;
+  avatarUrl?: string;
+  items?: ProfileMenuItem[];
+  onProfile?: () => void;
+  onSettings?: () => void;
+  onLogout?: () => void;
+};
 
 function ProfileMenu({
   name,
@@ -48,13 +48,13 @@ function ProfileMenu({
     .map((part) => part[0])
     .slice(0, 2)
     .join("")
-    .toUpperCase()
+    .toUpperCase();
 
-  const hasMenuItems = Boolean(onProfile || onSettings || items?.length)
+  const hasMenuItems = Boolean(onProfile || onSettings || items?.length);
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
+      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 outline-none transition-shadow hover:ring-2 hover:ring-ring/50">
         <Avatar>
           <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback>{initials}</AvatarFallback>
@@ -64,7 +64,11 @@ function ProfileMenu({
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-1.5">
           <span className="font-medium">{name}</span>
-          {email && <span className="text-xs font-normal text-muted-foreground">{email}</span>}
+          {email && (
+            <span className="text-xs font-normal text-muted-foreground">
+              {email}
+            </span>
+          )}
           {role && (
             <Badge variant="secondary" className="w-fit font-normal">
               {role}
@@ -108,7 +112,7 @@ function ProfileMenu({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
-export { ProfileMenu }
+export { ProfileMenu };
