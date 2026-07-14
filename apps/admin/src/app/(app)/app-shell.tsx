@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : null
         }
       />
-      <div className="flex flex-1">
+      <div className="flex flex-1 items-stretch">
         <SidebarNav
           items={items}
           renderLink={(item, content) => (

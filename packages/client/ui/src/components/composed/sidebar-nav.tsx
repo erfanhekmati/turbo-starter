@@ -21,7 +21,7 @@ function SidebarNav({ items, header, footer, className, renderLink }: SidebarNav
   return (
     <aside
       className={cn(
-        "flex h-full w-64 shrink-0 flex-col gap-4 border-r bg-background p-4",
+        "flex w-64 shrink-0 flex-col gap-4 self-stretch border-r bg-background p-4",
         className
       )}
     >
