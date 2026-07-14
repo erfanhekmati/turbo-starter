@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Navbar, SidebarNav, toast } from '@repo/ui';
-import { LayoutDashboard, LogOut } from 'lucide-react';
+import { Navbar, ProfileMenu, SidebarNav, toast } from '@repo/ui';
+import { LayoutDashboard } from 'lucide-react';
 import { useCurrentUser } from '@/features/auth';
 import { getApiClient } from '@/lib/api';
 
@@ -32,23 +32,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     },
   ];
 
+  const displayName = user
+    ? `${user.firstName} ${user.lastName}`.trim()
+    : '';
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar
         logo={<Link href="/dashboard">Turbo Starter</Link>}
         actions={
-          <div className="flex items-center gap-3">
-            {user ? (
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {user.firstName} {user.lastName}
-                {user.roles.length > 0 ? ` · ${user.roles.join(', ')}` : ''}
-              </span>
-            ) : null}
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="size-4" />
-              Sign out
-            </Button>
-          </div>
+          user ? (
+            <ProfileMenu
+              name={displayName || user.email}
+              email={user.email}
+              role={user.roles.length > 0 ? user.roles.join(', ') : undefined}
+              onLogout={handleLogout}
+            />
+          ) : null
         }
       />
       <div className="flex flex-1">

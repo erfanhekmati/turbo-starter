@@ -265,6 +265,7 @@ export default function DesignSystemPage() {
           <ProfileMenu
             name="Erfan Hekmati"
             email="erfanhekmati8@gmail.com"
+            role="ADMIN"
             onProfile={() => toast.info("Open profile")}
             onSettings={() => toast.info("Open settings")}
             onLogout={() => toast.warning("Logged out")}

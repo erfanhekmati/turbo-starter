@@ -4,6 +4,7 @@ import * as React from "react"
 import { LogOutIcon, SettingsIcon, UserIcon } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
+import { Badge } from "../ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ type ProfileMenuItem = {
 type ProfileMenuProps = {
   name: string
   email?: string
+  role?: string
   avatarUrl?: string
   items?: ProfileMenuItem[]
   onProfile?: () => void
@@ -34,6 +36,7 @@ type ProfileMenuProps = {
 function ProfileMenu({
   name,
   email,
+  role,
   avatarUrl,
   items,
   onProfile,
@@ -47,6 +50,8 @@ function ProfileMenu({
     .join("")
     .toUpperCase()
 
+  const hasMenuItems = Boolean(onProfile || onSettings || items?.length)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
@@ -56,33 +61,42 @@ function ProfileMenu({
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex flex-col">
+        <DropdownMenuLabel className="flex flex-col gap-1.5">
           <span className="font-medium">{name}</span>
           {email && <span className="text-xs font-normal text-muted-foreground">{email}</span>}
+          {role && (
+            <Badge variant="secondary" className="w-fit font-normal">
+              {role}
+            </Badge>
+          )}
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          {onProfile && (
-            <DropdownMenuItem onSelect={onProfile}>
-              <UserIcon /> Profile
-            </DropdownMenuItem>
-          )}
-          {onSettings && (
-            <DropdownMenuItem onSelect={onSettings}>
-              <SettingsIcon /> Settings
-            </DropdownMenuItem>
-          )}
-          {items?.map((item) => (
-            <DropdownMenuItem
-              key={item.label}
-              variant={item.variant}
-              onSelect={item.onSelect}
-            >
-              {item.icon}
-              {item.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+        {hasMenuItems && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              {onProfile && (
+                <DropdownMenuItem onSelect={onProfile}>
+                  <UserIcon /> Profile
+                </DropdownMenuItem>
+              )}
+              {onSettings && (
+                <DropdownMenuItem onSelect={onSettings}>
+                  <SettingsIcon /> Settings
+                </DropdownMenuItem>
+              )}
+              {items?.map((item) => (
+                <DropdownMenuItem
+                  key={item.label}
+                  variant={item.variant}
+                  onSelect={item.onSelect}
+                >
+                  {item.icon}
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+          </>
+        )}
         {onLogout && (
           <>
             <DropdownMenuSeparator />
