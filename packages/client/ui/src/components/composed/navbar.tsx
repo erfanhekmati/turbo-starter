@@ -3,11 +3,8 @@ import * as React from "react"
 import { cn } from "../../lib/utils"
 
 type NavbarProps = {
-  /** Optional logo — omit when branding lives in the sidebar. */
   logo?: React.ReactNode
-  /** Content rendered before the logo. */
   start?: React.ReactNode
-  /** Secondary content after the logo (e.g. breadcrumbs). */
   links?: React.ReactNode
   actions?: React.ReactNode
   className?: string
