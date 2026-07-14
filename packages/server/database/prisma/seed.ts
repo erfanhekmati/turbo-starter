@@ -1,12 +1,26 @@
-import 'dotenv/config';
+import path from 'node:path';
+import { config as loadEnv } from 'dotenv';
+import * as argon2 from 'argon2';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { mysqlUrlToPoolConfig } from '../src/mysql-url.util';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is required to run the database seed.');
+// Seed runs from the package dir; env lives at the monorepo root.
+loadEnv({ path: path.resolve(__dirname, '../../../../.env') });
+
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`${name} is required to run the database seed.`);
+  }
+  return value;
 }
+
+const connectionString = requireEnv('DATABASE_URL');
+const ownerEmail = requireEnv('SEED_OWNER_EMAIL');
+const ownerPassword = requireEnv('SEED_OWNER_PASSWORD');
+const ownerFirstName = requireEnv('SEED_OWNER_FIRST_NAME');
+const ownerLastName = requireEnv('SEED_OWNER_LAST_NAME');
 
 const adapter = new PrismaMariaDb(mysqlUrlToPoolConfig(connectionString));
 const prisma = new PrismaClient({ adapter });
@@ -27,6 +41,45 @@ const PERMISSIONS = [
 
 const USER_PERMISSION_KEYS = ['users:read', 'files:read', 'files:write'] as const;
 const ADMIN_PERMISSION_KEYS = PERMISSIONS.map((permission) => permission.key);
+
+async function seedOwnerUser(adminRoleId: string): Promise<void> {
+  const passwordHash = await argon2.hash(ownerPassword, {
+    type: argon2.argon2id,
+  });
+
+  const owner = await prisma.user.upsert({
+    where: { email: ownerEmail },
+    create: {
+      email: ownerEmail,
+      firstName: ownerFirstName,
+      lastName: ownerLastName,
+      passwordHash,
+      emailVerifiedAt: new Date(),
+      isActive: true,
+    },
+    update: {
+      firstName: ownerFirstName,
+      lastName: ownerLastName,
+      passwordHash,
+      emailVerifiedAt: new Date(),
+      isActive: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: owner.id,
+        roleId: adminRoleId,
+      },
+    },
+    create: {
+      userId: owner.id,
+      roleId: adminRoleId,
+    },
+    update: {},
+  });
+}
 
 async function main(): Promise<void> {
   for (const permission of PERMISSIONS) {
@@ -73,6 +126,8 @@ async function main(): Promise<void> {
       })),
     ],
   });
+
+  await seedOwnerUser(adminRole.id);
 }
 
 main()
