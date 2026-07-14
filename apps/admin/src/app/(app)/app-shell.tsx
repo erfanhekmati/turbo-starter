@@ -100,6 +100,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-0 flex-1 items-stretch">
         <SidebarNav
           items={items}
+          storageKey="admin-sidebar-collapsed"
           renderLink={(item, content) => (
             <Link key={item.href} href={item.href}>
               {content}
