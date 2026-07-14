@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Navbar, ProfileMenu, ScrollArea, SidebarNav, toast } from '@repo/ui';
+import {
+  AppBreadcrumbs,
+  Navbar,
+  ProfileMenu,
+  ScrollArea,
+  SidebarNav,
+  toast,
+} from '@repo/ui';
 import { LayoutDashboard } from 'lucide-react';
 import { useCurrentUser } from '@/features/auth';
 import { getApiClient } from '@/lib/api';
@@ -30,6 +37,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       icon: <LayoutDashboard className="size-4" />,
       active: pathname.startsWith('/dashboard'),
     },
+  ];
+
+  const currentPage =
+    items.find((item) => pathname.startsWith(item.href))?.label ?? 'Page';
+  const breadcrumbItems = [
+    { label: 'Home', href: '/dashboard' },
+    { label: currentPage },
   ];
 
   const displayName = user
@@ -62,7 +76,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
         <main className="min-h-0 flex-1">
           <ScrollArea className="h-full">
-            <div className="p-6">{children}</div>
+            <div className="space-y-6 p-6">
+              <AppBreadcrumbs
+                items={breadcrumbItems}
+                renderLink={(item, label) => (
+                  <Link href={item.href}>{label}</Link>
+                )}
+              />
+              {children}
+            </div>
           </ScrollArea>
         </main>
       </div>
