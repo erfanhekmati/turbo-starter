@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Navbar, ProfileMenu, SidebarNav, toast } from '@repo/ui';
+import { Navbar, ProfileMenu, ScrollArea, SidebarNav, toast } from '@repo/ui';
 import {
   FileText,
   LayoutDashboard,
@@ -68,7 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     : '';
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-svh flex-col">
       <Navbar
         logo={<Link href="/dashboard">Turbo Starter Admin</Link>}
         actions={
@@ -83,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : null
         }
       />
-      <div className="flex flex-1 items-stretch">
+      <div className="flex min-h-0 flex-1 items-stretch">
         <SidebarNav
           items={items}
           renderLink={(item, content) => (
@@ -92,7 +92,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           )}
         />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="min-h-0 flex-1">
+          <ScrollArea className="h-full">
+            <div className="p-6">{children}</div>
+          </ScrollArea>
+        </main>
       </div>
     </div>
   );

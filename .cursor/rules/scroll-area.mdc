@@ -1,0 +1,50 @@
+---
+description: Use ScrollArea instead of native overflow scrollbars in UI
+globs: **/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# Scroll Area Pattern
+
+Never use native browser scrollbars (`overflow-auto`, `overflow-y-auto`, `overflow-x-auto`) for product UI panels. Use `ScrollArea` from `@repo/ui` instead.
+
+## When to use
+
+- Sidebars and nav lists
+- Main content regions inside app shells
+- Dialogs, sheets, popovers with long content
+- Tables, card lists, and any fixed-height panel that can overflow
+
+## Pattern
+
+Give the scroll parent a constrained height (`h-full`, `h-*`, or `min-h-0 flex-1` inside a flex column), then wrap content in `ScrollArea`:
+
+```tsx
+import { ScrollArea } from "@repo/ui"
+
+// Flex child that should scroll
+<div className="min-h-0 flex-1">
+  <ScrollArea className="h-full">
+    <div className="p-4">{/* content */}</div>
+  </ScrollArea>
+</div>
+
+// Fixed-height panel
+<ScrollArea className="h-72 rounded-md border">
+  {/* content */}
+</ScrollArea>
+```
+
+## Avoid
+
+```tsx
+// ❌ Native scrollbar
+<nav className="overflow-y-auto">...</nav>
+<main className="flex-1 overflow-y-auto">...</main>
+```
+
+## Notes
+
+- `ScrollArea` is exported from `@repo/ui` (`packages/client/ui/src/components/ui/scroll-area.tsx`).
+- Demo lives on the design system page under **Scroll Area**.
+- Body/document scroll for full pages is fine; this rule is for in-app panels.

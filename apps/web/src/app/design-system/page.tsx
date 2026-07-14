@@ -54,6 +54,7 @@ import {
   ProfileMenu,
   SearchInput,
   SettingsMenu,
+  ScrollArea,
   Skeleton,
   StatisticsCard,
   Steps,
@@ -438,6 +439,38 @@ export default function DesignSystemPage() {
           ]}
           currentStep={1}
         />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Scroll Area</h2>
+        <p className="text-sm text-muted-foreground">
+          Prefer <code className="rounded bg-muted px-1 py-0.5 text-xs">ScrollArea</code> over
+          native <code className="rounded bg-muted px-1 py-0.5 text-xs">overflow-*</code>{" "}
+          scrollbars for constrained panels (sidebars, dialogs, tables, main content).
+        </p>
+        <div className="flex flex-wrap gap-6">
+          <ScrollArea className="h-48 w-64 rounded-md border">
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 24 }, (_, i) => (
+                <p key={i} className="text-sm text-muted-foreground">
+                  Scroll item {i + 1}
+                </p>
+              ))}
+            </div>
+          </ScrollArea>
+          <ScrollArea className="h-48 w-72 rounded-md border">
+            <div className="flex w-max gap-3 p-4">
+              {Array.from({ length: 12 }, (_, i) => (
+                <div
+                  key={i}
+                  className="flex size-20 shrink-0 items-center justify-center rounded-md bg-muted text-sm"
+                >
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
       </section>
 
       <section className="space-y-3">
