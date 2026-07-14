@@ -39,7 +39,8 @@ services:
     container_name: turbo-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Host 6380 avoids clashing with a local Windows Redis on 6379.
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:

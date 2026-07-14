@@ -10,6 +10,7 @@ import {
   DATABASE_MODULE_OPTIONS,
 } from './database.constants';
 import type { DatabaseModuleOptions } from './database.module-definition';
+import { mysqlUrlToPoolConfig } from './mysql-url.util';
 
 @Injectable()
 export class PrismaService
@@ -22,7 +23,7 @@ export class PrismaService
     private readonly dbOptions: DatabaseModuleOptions,
   ) {
     const adapter = new PrismaMariaDb(
-      dbOptions.connectionString,
+      mysqlUrlToPoolConfig(dbOptions.connectionString),
     );
     super({ adapter });
     this.adapter = adapter;

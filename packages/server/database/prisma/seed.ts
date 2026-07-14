@@ -3,6 +3,7 @@ import { config as loadEnv } from 'dotenv';
 import * as argon2 from 'argon2';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { mysqlUrlToPoolConfig } from '../src/mysql-url.util';
 
 loadEnv({ path: path.resolve(__dirname, '../../../../.env') });
 
@@ -20,7 +21,7 @@ const ownerPassword = requireEnv('SEED_OWNER_PASSWORD');
 const ownerFirstName = requireEnv('SEED_OWNER_FIRST_NAME');
 const ownerLastName = requireEnv('SEED_OWNER_LAST_NAME');
 
-const adapter = new PrismaMariaDb(connectionString);
+const adapter = new PrismaMariaDb(mysqlUrlToPoolConfig(connectionString));
 const prisma = new PrismaClient({ adapter });
 
 const ROLES = [

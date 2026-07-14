@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -25,6 +26,11 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // Turbo runs the API with cwd=apps/api; root .env lives two levels up.
+      envFilePath: [
+        path.resolve(process.cwd(), '.env'),
+        path.resolve(process.cwd(), '../../.env'),
+      ],
       load: [configuration],
       validate,
     }),
