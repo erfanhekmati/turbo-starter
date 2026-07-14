@@ -3,9 +3,7 @@ import { config as loadEnv } from 'dotenv';
 import * as argon2 from 'argon2';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { mysqlUrlToPoolConfig } from '../src/mysql-url.util';
 
-// Seed runs from the package dir; env lives at the monorepo root.
 loadEnv({ path: path.resolve(__dirname, '../../../../.env') });
 
 function requireEnv(name: string): string {
@@ -22,7 +20,7 @@ const ownerPassword = requireEnv('SEED_OWNER_PASSWORD');
 const ownerFirstName = requireEnv('SEED_OWNER_FIRST_NAME');
 const ownerLastName = requireEnv('SEED_OWNER_LAST_NAME');
 
-const adapter = new PrismaMariaDb(mysqlUrlToPoolConfig(connectionString));
+const adapter = new PrismaMariaDb(connectionString);
 const prisma = new PrismaClient({ adapter });
 
 const ROLES = [
@@ -133,11 +131,9 @@ async function main(): Promise<void> {
 main()
   .then(async () => {
     await prisma.$disconnect();
-    await adapter.dispose();
   })
   .catch(async (error: unknown) => {
     console.error(error);
     await prisma.$disconnect();
-    await adapter.dispose();
     process.exit(1);
   });
