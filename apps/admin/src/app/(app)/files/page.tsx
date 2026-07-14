@@ -131,16 +131,13 @@ export default function FilesPage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading files...</p>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={data?.items ?? []}
-          searchPlaceholder="Search files..."
-          exportFilename="files.csv"
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={data?.items ?? []}
+        isLoading={isLoading}
+        searchPlaceholder="Search files..."
+        exportFilename="files.csv"
+      />
     </div>
   );
 }

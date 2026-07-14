@@ -57,16 +57,13 @@ export default function AuditPage() {
         </p>
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading audit logs...</p>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={data?.items ?? []}
-          searchPlaceholder="Search audit logs..."
-          exportFilename="audit-logs.csv"
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={data?.items ?? []}
+        isLoading={isLoading}
+        searchPlaceholder="Search audit logs..."
+        exportFilename="audit-logs.csv"
+      />
     </div>
   );
 }

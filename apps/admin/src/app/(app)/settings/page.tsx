@@ -26,6 +26,8 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
+  SettingsCardSkeleton,
+  Skeleton,
   toast,
 } from '@repo/ui';
 import { ApiError } from '@repo/api-client';
@@ -34,7 +36,7 @@ import { getApiClient } from '@/lib/api';
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading } = useCurrentUser();
   const [setupData, setSetupData] = useState<TotpSetupResponse | null>(null);
   const [isSettingUp, setIsSettingUp] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
@@ -99,99 +101,103 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <Card className="max-w-3xl">
-        <CardHeader>
-          <CardTitle>Two-factor authentication</CardTitle>
-          <CardDescription>
-            Protect your admin account with an authenticator app.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-sm">
-            <strong>Status:</strong>{' '}
-            {user?.totpEnabled ? 'Enabled' : 'Not enabled'}
-          </div>
-
-          {!user?.totpEnabled ? (
-            <Button onClick={() => void startSetup()} loading={isSettingUp}>
-              Generate setup QR code
-            </Button>
-          ) : (
-            <Button
-              variant="destructive"
-              onClick={() => void disableTotp()}
-              loading={isDisabling}
-            >
-              Disable two-factor authentication
-            </Button>
-          )}
-
-          {setupData ? (
-            <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-              <div className="rounded-lg border p-4">
-                <Image
-                  src={setupData.qrCodeDataUrl}
-                  alt="TOTP QR code"
-                  width={180}
-                  height={180}
-                  unoptimized
-                  className="mx-auto"
-                />
-              </div>
-              <div className="space-y-4">
-                <div className="rounded-lg border bg-muted/30 p-4 text-sm">
-                  <p className="font-medium">Manual setup secret</p>
-                  <p className="mt-2 break-all text-muted-foreground">
-                    {setupData.secret}
-                  </p>
-                </div>
-
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(confirmSetup)}
-                    className="space-y-4"
-                  >
-                    <FormField
-                      control={form.control}
-                      name="code"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Authenticator code</FormLabel>
-                          <FormControl>
-                            <InputOTP maxLength={6} {...field}>
-                              <InputOTPGroup>
-                                {Array.from({ length: 6 }).map((_, index) => (
-                                  <InputOTPSlot key={index} index={index} />
-                                ))}
-                              </InputOTPGroup>
-                            </InputOTP>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setSetupData(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        loading={form.formState.isSubmitting}
-                      >
-                        Confirm and enable
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </div>
+      {isUserLoading ? (
+        <SettingsCardSkeleton />
+      ) : (
+        <Card className="max-w-3xl">
+          <CardHeader>
+            <CardTitle>Two-factor authentication</CardTitle>
+            <CardDescription>
+              Protect your admin account with an authenticator app.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-sm">
+              <strong>Status:</strong>{' '}
+              {user?.totpEnabled ? 'Enabled' : 'Not enabled'}
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+
+            {!user?.totpEnabled ? (
+              <Button onClick={() => void startSetup()} loading={isSettingUp}>
+                Generate setup QR code
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={() => void disableTotp()}
+                loading={isDisabling}
+              >
+                Disable two-factor authentication
+              </Button>
+            )}
+
+            {setupData ? (
+              <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+                <div className="rounded-lg border p-4">
+                  <Image
+                    src={setupData.qrCodeDataUrl}
+                    alt="TOTP QR code"
+                    width={180}
+                    height={180}
+                    unoptimized
+                    className="mx-auto"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+                    <p className="font-medium">Manual setup secret</p>
+                    <p className="mt-2 break-all text-muted-foreground">
+                      {setupData.secret}
+                    </p>
+                  </div>
+
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(confirmSetup)}
+                      className="space-y-4"
+                    >
+                      <FormField
+                        control={form.control}
+                        name="code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Authenticator code</FormLabel>
+                            <FormControl>
+                              <InputOTP maxLength={6} {...field}>
+                                <InputOTPGroup>
+                                  {Array.from({ length: 6 }).map((_, index) => (
+                                    <InputOTPSlot key={index} index={index} />
+                                  ))}
+                                </InputOTPGroup>
+                              </InputOTP>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setSetupData(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          loading={form.formState.isSubmitting}
+                        >
+                          Confirm and enable
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

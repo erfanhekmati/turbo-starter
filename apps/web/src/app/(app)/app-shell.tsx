@@ -6,6 +6,7 @@ import {
   AppBreadcrumbs,
   Navbar,
   ProfileMenu,
+  ProfileMenuSkeleton,
   ScrollArea,
   SidebarNav,
   toast,
@@ -18,7 +19,7 @@ import { getApiClient } from '@/lib/api';
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading: isUserLoading } = useCurrentUser();
   const [collapsed, setCollapsed] = useSidebarCollapsed({
     storageKey: 'web-sidebar-collapsed',
   });
@@ -79,7 +80,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
           }
           actions={
-            user ? (
+            isUserLoading ? (
+              <ProfileMenuSkeleton />
+            ) : user ? (
               <ProfileMenu
                 name={displayName || user.email}
                 email={user.email}

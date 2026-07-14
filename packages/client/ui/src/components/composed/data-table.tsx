@@ -34,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table"
+import { DataTableSkeleton } from "./skeletons"
 
 function createSelectionColumn<TData>(): ColumnDef<TData> {
   return {
@@ -90,6 +91,8 @@ type DataTableProps<TData, TValue> = {
   searchPlaceholder?: string
   exportFilename?: string
   enableRowSelection?: boolean
+  isLoading?: boolean
+  skeletonRows?: number
   bulkActions?: (selectedRows: TData[], clearSelection: () => void) => React.ReactNode
 }
 
@@ -99,6 +102,8 @@ function DataTable<TData, TValue>({
   searchPlaceholder = "Search...",
   exportFilename = "export.csv",
   enableRowSelection = false,
+  isLoading = false,
+  skeletonRows = 8,
   bulkActions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -128,6 +133,15 @@ function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  if (isLoading) {
+    return (
+      <DataTableSkeleton
+        rows={skeletonRows}
+        columns={columns.length + (enableRowSelection ? 1 : 0)}
+      />
+    )
+  }
 
   const selectedRows = table.getFilteredSelectedRowModel().rows.map((r) => r.original)
 

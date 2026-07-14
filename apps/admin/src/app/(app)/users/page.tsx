@@ -88,16 +88,13 @@ export default function UsersPage() {
         </p>
       </div>
 
-      {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading users...</p>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={data?.items ?? []}
-          searchPlaceholder="Search users..."
-          exportFilename="users.csv"
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={data?.items ?? []}
+        isLoading={isLoading}
+        searchPlaceholder="Search users..."
+        exportFilename="users.csv"
+      />
     </div>
   );
 }
