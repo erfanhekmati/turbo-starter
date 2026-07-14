@@ -95,7 +95,7 @@ function SidebarCollapseToggle({
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       aria-expanded={!collapsed}
       onClick={() => onCollapsedChange(!collapsed)}
-      className={cn("cursor-pointer", className)}
+      className={className}
     >
       {collapsed ? (
         <ChevronRightIcon className="size-4" />
