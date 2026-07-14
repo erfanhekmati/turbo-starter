@@ -1,12 +1,18 @@
 'use client';
 
+import { Skeleton, UserCardSkeleton } from '@repo/ui';
 import { useCurrentUser } from '@/features/auth';
 
 export default function DashboardPage() {
   const { data: user, isLoading } = useCurrentUser();
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading profile…</p>;
+    return (
+      <div className="space-y-4" aria-busy="true" aria-label="Loading dashboard">
+        <Skeleton className="h-8 w-40" />
+        <UserCardSkeleton />
+      </div>
+    );
   }
 
   return (

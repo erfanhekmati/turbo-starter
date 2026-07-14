@@ -27,7 +27,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
   SettingsCardSkeleton,
-  Skeleton,
   toast,
 } from '@repo/ui';
 import { ApiError } from '@repo/api-client';
