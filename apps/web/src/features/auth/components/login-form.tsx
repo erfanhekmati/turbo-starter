@@ -131,7 +131,7 @@ export function LoginForm() {
       <Button
         type="button"
         variant="outline"
-        className="w-full bg-background dark:bg-background"
+        className="w-full bg-transparent dark:bg-transparent"
         asChild
       >
         <a href={`${API_BASE_URL}/auth/oauth/google`}>
@@ -140,15 +140,12 @@ export function LoginForm() {
         </a>
       </Button>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Separator />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
+      <div className="flex items-center gap-3">
+        <Separator className="flex-1" />
+        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+          Or continue with
+        </span>
+        <Separator className="flex-1" />
       </div>
 
       <div className="flex gap-2">
