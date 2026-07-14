@@ -1,44 +1,38 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import * as React from "react";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
-import { cn } from "../../lib/utils"
-import { Button } from "../ui/button"
-import { ScrollArea } from "../ui/scroll-area"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../ui/tooltip"
+import { cn } from "../../lib/utils";
+import { Button } from "../ui/button";
+import { ScrollArea } from "../ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-const DEFAULT_STORAGE_KEY = "sidebar-collapsed"
+const DEFAULT_STORAGE_KEY = "sidebar-collapsed";
 
 type SidebarNavItem = {
-  label: string
-  href: string
-  icon?: React.ReactNode
-  active?: boolean
-}
+  label: string;
+  href: string;
+  icon?: React.ReactNode;
+  active?: boolean;
+};
 
 type SidebarNavProps = {
-  items: SidebarNavItem[]
-  /** Brand/logo shown in the sidebar top bar. */
-  logo?: React.ReactNode
-  header?: React.ReactNode
-  footer?: React.ReactNode
-  className?: string
-  renderLink?: (item: SidebarNavItem, children: React.ReactNode) => React.ReactNode
-  /** Enable collapse to an icons-only rail. Defaults to true. */
-  collapsible?: boolean
-  /** Controlled collapsed state. */
-  collapsed?: boolean
-  /** Uncontrolled initial collapsed state. */
-  defaultCollapsed?: boolean
-  onCollapsedChange?: (collapsed: boolean) => void
-  /** Persist collapsed state in localStorage. Pass `null` to disable. */
-  storageKey?: string | null
-}
+  items: SidebarNavItem[];
+  logo?: React.ReactNode;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+  className?: string;
+  renderLink?: (
+    item: SidebarNavItem,
+    children: React.ReactNode,
+  ) => React.ReactNode;
+  collapsible?: boolean;
+  collapsed?: boolean;
+  defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  storageKey?: string | null;
+};
 
 function useSidebarCollapsed({
   collapsed: collapsedProp,
@@ -46,42 +40,42 @@ function useSidebarCollapsed({
   onCollapsedChange,
   storageKey = DEFAULT_STORAGE_KEY,
 }: {
-  collapsed?: boolean
-  defaultCollapsed?: boolean
-  onCollapsedChange?: (collapsed: boolean) => void
-  storageKey?: string | null
+  collapsed?: boolean;
+  defaultCollapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  storageKey?: string | null;
 } = {}) {
-  const isControlled = collapsedProp !== undefined
-  const [uncontrolled, setUncontrolled] = React.useState(defaultCollapsed)
+  const isControlled = collapsedProp !== undefined;
+  const [uncontrolled, setUncontrolled] = React.useState(defaultCollapsed);
 
   React.useEffect(() => {
-    if (isControlled || !storageKey) return
+    if (isControlled || !storageKey) return;
     try {
-      const stored = window.localStorage.getItem(storageKey)
-      if (stored === "true") setUncontrolled(true)
-      if (stored === "false") setUncontrolled(false)
+      const stored = window.localStorage.getItem(storageKey);
+      if (stored === "true") setUncontrolled(true);
+      if (stored === "false") setUncontrolled(false);
     } catch {
       // ignore storage errors
     }
-  }, [isControlled, storageKey])
+  }, [isControlled, storageKey]);
 
-  const collapsed = isControlled ? collapsedProp : uncontrolled
+  const collapsed = isControlled ? collapsedProp : uncontrolled;
 
   function setCollapsed(next: boolean) {
     if (!isControlled) {
-      setUncontrolled(next)
+      setUncontrolled(next);
       if (storageKey) {
         try {
-          window.localStorage.setItem(storageKey, String(next))
+          window.localStorage.setItem(storageKey, String(next));
         } catch {
           // ignore storage errors
         }
       }
     }
-    onCollapsedChange?.(next)
+    onCollapsedChange?.(next);
   }
 
-  return [collapsed, setCollapsed] as const
+  return [collapsed, setCollapsed] as const;
 }
 
 function SidebarCollapseToggle({
@@ -89,9 +83,9 @@ function SidebarCollapseToggle({
   onCollapsedChange,
   className,
 }: {
-  collapsed: boolean
-  onCollapsedChange: (collapsed: boolean) => void
-  className?: string
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+  className?: string;
 }) {
   return (
     <Button
@@ -109,7 +103,7 @@ function SidebarCollapseToggle({
         <ChevronLeftIcon className="size-4" />
       )}
     </Button>
-  )
+  );
 }
 
 function SidebarNav({
@@ -130,9 +124,9 @@ function SidebarNav({
     defaultCollapsed,
     onCollapsedChange,
     storageKey,
-  })
+  });
 
-  const showCollapsed = collapsible && collapsed
+  const showCollapsed = collapsible && collapsed;
 
   return (
     <aside
@@ -140,14 +134,14 @@ function SidebarNav({
       className={cn(
         "flex min-h-0 shrink-0 flex-col self-stretch overflow-hidden border-r bg-background transition-[width] duration-200 ease-in-out",
         showCollapsed ? "w-16" : "w-64",
-        className
+        className,
       )}
     >
       {(logo || collapsible) && (
         <div
           className={cn(
             "flex h-14 shrink-0 items-center border-b px-3",
-            showCollapsed ? "justify-center" : "gap-2"
+            showCollapsed ? "justify-center" : "gap-2",
           )}
         >
           {logo && !showCollapsed && (
@@ -165,7 +159,7 @@ function SidebarNav({
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col gap-4 overflow-hidden",
-          showCollapsed ? "p-2" : "p-4"
+          showCollapsed ? "p-2" : "p-4",
         )}
       >
         {header && !showCollapsed ? header : null}
@@ -174,7 +168,7 @@ function SidebarNav({
           <nav
             className={cn(
               "flex flex-col gap-1",
-              showCollapsed ? "items-center" : "pr-3"
+              showCollapsed ? "items-center" : "pr-3",
             )}
           >
             {items.map((item) => {
@@ -182,29 +176,27 @@ function SidebarNav({
                 <span
                   className={cn(
                     "flex items-center rounded-md text-sm font-medium transition-colors",
-                    showCollapsed
-                      ? "size-9 justify-center"
-                      : "gap-2 px-3 py-2",
+                    showCollapsed ? "size-9 justify-center" : "gap-2 px-3 py-2",
                     item.active
                       ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                   )}
                 >
                   {item.icon}
                   {!showCollapsed && item.label}
                 </span>
-              )
+              );
 
               const linked = renderLink ? (
                 renderLink(item, content)
               ) : (
                 <a href={item.href}>{content}</a>
-              )
+              );
 
               if (!showCollapsed) {
                 return (
                   <React.Fragment key={item.href}>{linked}</React.Fragment>
-                )
+                );
               }
 
               return (
@@ -216,7 +208,7 @@ function SidebarNav({
                     {item.label}
                   </TooltipContent>
                 </Tooltip>
-              )
+              );
             })}
           </nav>
         </ScrollArea>
@@ -224,7 +216,7 @@ function SidebarNav({
         {footer && !showCollapsed ? footer : null}
       </div>
     </aside>
-  )
+  );
 }
 
 export {
@@ -232,4 +224,4 @@ export {
   SidebarCollapseToggle,
   useSidebarCollapsed,
   type SidebarNavItem,
-}
+};

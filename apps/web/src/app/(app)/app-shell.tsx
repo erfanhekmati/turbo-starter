@@ -70,6 +70,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Navbar
+          logo={
+            collapsed ? (
+              <Link href="/dashboard">Turbo Starter</Link>
+            ) : undefined
+          }
           actions={
             user ? (
               <ProfileMenu
