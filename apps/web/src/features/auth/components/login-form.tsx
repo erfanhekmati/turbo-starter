@@ -260,7 +260,7 @@ export function LoginForm() {
               control={otpVerifyForm.control}
               name="code"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col items-center">
                   <FormLabel>Verification code</FormLabel>
                   <FormControl>
                     <InputOTP maxLength={6} {...field}>

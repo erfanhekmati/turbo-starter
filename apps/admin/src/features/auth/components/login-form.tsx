@@ -209,7 +209,7 @@ export function LoginForm() {
               control={totpForm.control}
               name="code"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col items-center">
                   <FormLabel>Authentication code</FormLabel>
                   <FormControl>
                     <InputOTP maxLength={6} {...field}>

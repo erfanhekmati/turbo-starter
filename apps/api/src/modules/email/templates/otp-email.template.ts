@@ -21,7 +21,7 @@ export function otpEmailHtml(purpose: OtpPurpose, code: string): string {
   return `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <p>${INTRO_BY_PURPOSE[purpose]}</p>
-      <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px;">${code}</p>
+      <p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center;">${code}</p>
       <p>This code expires shortly and can only be used once. If you didn't request it, you can ignore this email.</p>
     </div>
   `;

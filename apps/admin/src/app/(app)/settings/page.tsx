@@ -159,7 +159,7 @@ export default function SettingsPage() {
                         control={form.control}
                         name="code"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="flex flex-col items-center">
                             <FormLabel>Authenticator code</FormLabel>
                             <FormControl>
                               <InputOTP maxLength={6} {...field}>
