@@ -13,7 +13,6 @@ import {
   TotpController,
 } from './controllers';
 import {
-  GitHubOAuthGuard,
   JwtAccessGuard,
   GoogleOAuthGuard,
   JwtRefreshGuard,
@@ -32,7 +31,6 @@ import {
   TotpService,
 } from './services';
 import {
-  GitHubOAuthStrategy,
   GoogleOAuthStrategy,
   JwtAccessStrategy,
   JwtRefreshStrategy,
@@ -71,9 +69,7 @@ import {
     JwtAccessStrategy,
     JwtRefreshStrategy,
     GoogleOAuthStrategy,
-    GitHubOAuthStrategy,
     GoogleOAuthGuard,
-    GitHubOAuthGuard,
     JwtRefreshGuard,
     { provide: APP_GUARD, useClass: JwtAccessGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

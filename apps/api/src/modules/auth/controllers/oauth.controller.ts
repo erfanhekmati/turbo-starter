@@ -3,7 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { Public } from '../../../common/decorators';
-import { GitHubOAuthGuard, GoogleOAuthGuard } from '../guards';
+import { GoogleOAuthGuard } from '../guards';
 import { AuthService, CookieService } from '../services';
 import type { OAuthUserProfile } from '../strategies/google-oauth.strategy';
 
@@ -28,21 +28,6 @@ export class OAuthController {
   @UseGuards(GoogleOAuthGuard)
   @ApiOperation({ summary: 'Handle the Google OAuth callback' })
   async googleCallback(
-    @Req() req: OAuthRequest,
-    @Res() res: Response,
-  ): Promise<void> {
-    await this.completeOAuthLogin(req, res);
-  }
-
-  @Get('github')
-  @UseGuards(GitHubOAuthGuard)
-  @ApiOperation({ summary: 'Redirect to GitHub OAuth login' })
-  github(): void {}
-
-  @Get('github/callback')
-  @UseGuards(GitHubOAuthGuard)
-  @ApiOperation({ summary: 'Handle the GitHub OAuth callback' })
-  async githubCallback(
     @Req() req: OAuthRequest,
     @Res() res: Response,
   ): Promise<void> {

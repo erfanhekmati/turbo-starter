@@ -24,7 +24,7 @@ import {
   Separator,
   toast,
 } from '@repo/ui';
-import { Globe, ShieldCheck, SquareTerminal } from 'lucide-react';
+import { Globe, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { ApiError } from '@repo/api-client';
 import { getApiClient } from '@/lib/api';
@@ -98,17 +98,11 @@ export function LoginForm() {
 
       {mode === 'password' ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3">
             <Button asChild variant="outline" className="w-full">
               <a href={getApiClient().auth.getGoogleOAuthUrl()}>
                 <Globe className="size-4" />
                 Google
-              </a>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <a href={getApiClient().auth.getGitHubOAuthUrl()}>
-                <SquareTerminal className="size-4" />
-                GitHub
               </a>
             </Button>
           </div>

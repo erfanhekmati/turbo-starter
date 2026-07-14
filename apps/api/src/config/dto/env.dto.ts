@@ -176,14 +176,6 @@ export class EnvDto {
 
   @IsOptional()
   @IsString()
-  GITHUB_CLIENT_ID?: string;
-
-  @IsOptional()
-  @IsString()
-  GITHUB_CLIENT_SECRET?: string;
-
-  @IsOptional()
-  @IsString()
   OAUTH_CALLBACK_BASE_URL?: string;
 
   @IsOptional()

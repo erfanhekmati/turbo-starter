@@ -69,7 +69,6 @@ export type AuthResource = {
   totpConfirm(input: TotpConfirmInput): Promise<TotpStatusResponse>;
   totpDisable(): Promise<TotpStatusResponse>;
   getGoogleOAuthUrl(): string;
-  getGitHubOAuthUrl(): string;
 };
 
 export function createAuthResource(http: HttpTransport): AuthResource {
@@ -204,10 +203,6 @@ export function createAuthResource(http: HttpTransport): AuthResource {
 
     getGoogleOAuthUrl() {
       return `${baseUrl}/auth/oauth/google`;
-    },
-
-    getGitHubOAuthUrl() {
-      return `${baseUrl}/auth/oauth/github`;
     },
   };
 }

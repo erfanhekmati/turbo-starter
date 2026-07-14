@@ -151,7 +151,7 @@ export class AuthService {
   }
 
   async loginWithOAuth(input: {
-    provider: 'google' | 'github';
+    provider: 'google';
     providerAccountId: string;
     email: string;
     firstName: string;

@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 export type OAuthUserProfile = {
-  provider: 'google' | 'github';
+  provider: 'google';
   providerAccountId: string;
   email: string;
   firstName: string;

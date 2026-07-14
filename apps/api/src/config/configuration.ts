@@ -69,8 +69,6 @@ export default () => ({
   oauth: {
     googleClientId: process.env.GOOGLE_CLIENT_ID,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    githubClientId: process.env.GITHUB_CLIENT_ID,
-    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackBaseUrl:
       process.env.OAUTH_CALLBACK_BASE_URL ?? 'http://localhost:8000',
     successRedirect:
