@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose, PasswordResetStep, PrismaService } from '@repo/database';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 import { isExpired, sessionExpiresAt } from '../utils';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
@@ -15,7 +15,7 @@ export class PasswordResetService {
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
-    private readonly emailService: EmailService,
+    private readonly mailQueue: MailQueueService,
   ) {}
 
   async start(email: string): Promise<string> {
@@ -80,7 +80,7 @@ export class PasswordResetService {
     });
 
     await this.tokenService.revokeAllForUser(user.id);
-    await this.emailService.sendPasswordChangedEmail(user.email);
+    await this.mailQueue.enqueuePasswordChanged(user.email);
   }
 
   private async getActiveSession(resetId: string) {

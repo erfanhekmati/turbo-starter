@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
 import { OtpPurpose, PrismaService } from '@repo/database';
 import { TooManyRequestsException } from '../../../common/exceptions';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 import { OtpService } from './otp.service';
 
 describe('OtpService', () => {
@@ -16,7 +16,7 @@ describe('OtpService', () => {
       update: jest.Mock;
     };
   };
-  let emailService: { sendOtpEmail: jest.Mock };
+  let mailQueue: { enqueueOtp: jest.Mock };
   let config: { getOrThrow: jest.Mock };
 
   beforeEach(async () => {
@@ -28,7 +28,7 @@ describe('OtpService', () => {
         update: jest.fn(),
       },
     };
-    emailService = { sendOtpEmail: jest.fn() };
+    mailQueue = { enqueueOtp: jest.fn() };
     config = {
       getOrThrow: jest.fn((key: string) => {
         const values: Record<string, string | number> = {
@@ -49,7 +49,7 @@ describe('OtpService', () => {
         OtpService,
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: config },
-        { provide: EmailService, useValue: emailService },
+        { provide: MailQueueService, useValue: mailQueue },
       ],
     }).compile();
 
@@ -57,25 +57,25 @@ describe('OtpService', () => {
   });
 
   describe('requestOtp', () => {
-    it('upserts a challenge and sends the email', async () => {
+    it('upserts a challenge and enqueues the email', async () => {
       prisma.otpChallenge.findUnique.mockResolvedValue(null);
       prisma.otpChallenge.upsert.mockResolvedValue({});
-      emailService.sendOtpEmail.mockResolvedValue(undefined);
+      mailQueue.enqueueOtp.mockResolvedValue(undefined);
 
       await otpService.requestOtp('jane@example.com', OtpPurpose.LOGIN);
 
       expect(prisma.otpChallenge.upsert).toHaveBeenCalled();
-      expect(emailService.sendOtpEmail).toHaveBeenCalledWith(
+      expect(mailQueue.enqueueOtp).toHaveBeenCalledWith(
         'jane@example.com',
         expect.any(String),
         OtpPurpose.LOGIN,
       );
     });
 
-    it('deletes the challenge when email sending fails', async () => {
+    it('deletes the challenge when enqueue fails', async () => {
       prisma.otpChallenge.findUnique.mockResolvedValue(null);
       prisma.otpChallenge.upsert.mockResolvedValue({});
-      emailService.sendOtpEmail.mockRejectedValue(new Error('SMTP down'));
+      mailQueue.enqueueOtp.mockRejectedValue(new Error('SMTP down'));
       prisma.otpChallenge.delete.mockResolvedValue({});
 
       await expect(

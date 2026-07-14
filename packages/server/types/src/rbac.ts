@@ -9,6 +9,9 @@ export const PermissionKey = {
   USERS_READ: 'users:read',
   USERS_WRITE: 'users:write',
   ROLES_MANAGE: 'roles:manage',
+  AUDIT_READ: 'audit:read',
+  FILES_READ: 'files:read',
+  FILES_WRITE: 'files:write',
 } as const;
 
 export type PermissionKey =

@@ -129,4 +129,68 @@ export class EnvDto {
   @IsOptional()
   @IsBoolean()
   SMTP_SECURE?: boolean;
+
+  @IsOptional()
+  @IsString()
+  COOKIE_DOMAIN?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  REDIS_URL!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  S3_ENDPOINT!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  S3_BUCKET!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  S3_ACCESS_KEY!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  S3_SECRET_KEY!: string;
+
+  @IsOptional()
+  @IsString()
+  S3_REGION?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  S3_FORCE_PATH_STYLE?: boolean;
+
+  @IsOptional()
+  @IsString()
+  S3_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  GITHUB_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  GITHUB_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  OAUTH_CALLBACK_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  OAUTH_SUCCESS_REDIRECT?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  TOTP_ENCRYPTION_KEY!: string;
 }

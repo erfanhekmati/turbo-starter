@@ -6,7 +6,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@repo/database';
 import { RoleName } from '@repo/backend-types';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { RegistrationService } from './registration.service';
@@ -72,7 +72,7 @@ describe('RegistrationService', () => {
         { provide: OtpService, useValue: otpService },
         { provide: PasswordHasherService, useValue: passwordHasher },
         { provide: TokenService, useValue: tokenService },
-        { provide: EmailService, useValue: { sendWelcomeEmail: jest.fn() } },
+        { provide: MailQueueService, useValue: { enqueueWelcome: jest.fn() } },
       ],
     }).compile();
 

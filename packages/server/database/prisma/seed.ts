@@ -20,9 +20,12 @@ const PERMISSIONS = [
   { key: 'users:read', description: 'Read user profiles' },
   { key: 'users:write', description: 'Create and update users' },
   { key: 'roles:manage', description: 'Manage roles and permissions' },
+  { key: 'audit:read', description: 'Read audit logs' },
+  { key: 'files:read', description: 'Read uploaded files' },
+  { key: 'files:write', description: 'Upload and delete files' },
 ] as const;
 
-const USER_PERMISSION_KEYS = ['users:read'] as const;
+const USER_PERMISSION_KEYS = ['users:read', 'files:read', 'files:write'] as const;
 const ADMIN_PERMISSION_KEYS = PERMISSIONS.map((permission) => permission.key);
 
 async function main(): Promise<void> {

@@ -4,7 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { hashToken } from '@repo/backend-utils';
 import { Prisma, PrismaService } from '@repo/database';
-import type { AccessTokenPayload, AuthTokens, RefreshTokenPayload } from '../types';
+import type {
+  AccessTokenPayload,
+  AuthTokens,
+  MfaTokenPayload,
+  RefreshTokenPayload,
+} from '../types';
 
 type PrismaClientLike = PrismaService | Prisma.TransactionClient;
 
@@ -20,6 +25,31 @@ export class TokenService {
     const tokens = await this.signTokenPair(userId, email);
     await this.persistRefreshToken(this.prisma, userId, tokens.refreshToken);
     return tokens;
+  }
+
+  async issueMfaToken(userId: string, email: string): Promise<string> {
+    const payload: MfaTokenPayload = {
+      sub: userId,
+      email,
+      type: 'mfa',
+    };
+
+    return this.jwtService.signAsync(payload, {
+      secret: this.config.getOrThrow<string>('jwt.accessSecret'),
+      expiresIn: '10m',
+    });
+  }
+
+  async verifyMfaToken(token: string): Promise<MfaTokenPayload> {
+    const payload = await this.jwtService.verifyAsync<MfaTokenPayload>(token, {
+      secret: this.config.getOrThrow<string>('jwt.accessSecret'),
+    });
+
+    if (payload.type !== 'mfa') {
+      throw new UnauthorizedException('Invalid MFA token');
+    }
+
+    return payload;
   }
 
   async rotateRefreshToken(

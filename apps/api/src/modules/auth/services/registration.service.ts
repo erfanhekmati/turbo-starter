@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { RoleName } from '@repo/backend-types';
 import { OtpPurpose, PrismaService, RegistrationStep } from '@repo/database';
 import type { AuthTokens } from '../types';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 import { isExpired, sessionExpiresAt } from '../utils';
 import {
   flattenUserAccess,
@@ -27,7 +27,7 @@ export class RegistrationService {
     private readonly otpService: OtpService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly tokenService: TokenService,
-    private readonly emailService: EmailService,
+    private readonly mailQueue: MailQueueService,
   ) {}
 
   async start(email: string): Promise<string> {
@@ -125,7 +125,7 @@ export class RegistrationService {
     });
     const profile = flattenUserAccess(user);
     const tokens = await this.tokenService.issueTokenPair(profile.id, profile.email);
-    await this.emailService.sendWelcomeEmail(profile.email, profile.firstName);
+    await this.mailQueue.enqueueWelcome(profile.email, profile.firstName);
 
     return { tokens, user: profile };
   }

@@ -51,6 +51,34 @@ export default () => ({
     from: process.env.SMTP_FROM,
     secure: process.env.SMTP_SECURE === 'true',
   },
+  cookie: {
+    domain: process.env.COOKIE_DOMAIN || undefined,
+  },
+  redis: {
+    url: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  },
+  s3: {
+    endpoint: process.env.S3_ENDPOINT,
+    bucket: process.env.S3_BUCKET,
+    accessKey: process.env.S3_ACCESS_KEY,
+    secretKey: process.env.S3_SECRET_KEY,
+    region: process.env.S3_REGION ?? 'us-east-1',
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false',
+    publicUrl: process.env.S3_PUBLIC_URL,
+  },
+  oauth: {
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    githubClientId: process.env.GITHUB_CLIENT_ID,
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackBaseUrl:
+      process.env.OAUTH_CALLBACK_BASE_URL ?? 'http://localhost:8000',
+    successRedirect:
+      process.env.OAUTH_SUCCESS_REDIRECT ?? 'http://localhost:3000/dashboard',
+  },
+  totp: {
+    encryptionKey: process.env.TOTP_ENCRYPTION_KEY,
+  },
   swagger: {
     title: 'Rest API Docs',
     description:

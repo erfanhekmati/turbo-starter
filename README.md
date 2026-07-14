@@ -6,10 +6,13 @@ Turborepo monorepo with a NestJS API, Next.js web app, shared UI kit, and Prisma
 
 | App / package | Tech |
 |---------------|------|
-| `apps/api` | NestJS, JWT auth, OTP flows, RBAC, Swagger |
-| `apps/web` | Next.js 16, React 19, Tailwind CSS 4 |
+| `apps/api` | NestJS, JWT cookie auth, OTP, OAuth, TOTP 2FA, RBAC, BullMQ, S3, Swagger |
+| `apps/web` | Next.js 16 member app (auth + dashboard) |
+| `apps/admin` | Next.js 16 admin dashboard (users, audit, files, 2FA) |
 | `packages/client/ui` | Shared component library (`@repo/ui`) |
+| `packages/client/api` | Typed API client (`@repo/api-client`) |
 | `packages/server/database` | Prisma + MySQL (`@repo/database`) |
+| `packages/server/types` | Shared Zod contracts + RBAC (`@repo/backend-types`) |
 
 ## Prerequisites
 
@@ -39,7 +42,7 @@ Generate long random strings for the JWT and OTP secrets before running in any s
 
 ### 3. Database
 
-Start MySQL (and phpMyAdmin) with Docker:
+Start MySQL, Redis, MinIO, and phpMyAdmin with Docker:
 
 ```bash
 pnpm docker:dev
@@ -55,6 +58,8 @@ pnpm db:seed
 | Service | URL |
 |---------|-----|
 | MySQL | `localhost:3306` (user `turbo`, password `turbo`, database `turbo`) |
+| Redis | `localhost:6379` |
+| MinIO S3 | `localhost:9000` (console `localhost:9001`, user `minio` / `minio123`) |
 | phpMyAdmin | http://localhost:8080 |
 
 Stop Docker services:
@@ -74,6 +79,7 @@ pnpm dev
 | App | URL |
 |-----|-----|
 | Web | http://localhost:3000 |
+| Admin | http://localhost:3001 |
 | API | http://localhost:8000 |
 | Swagger | http://localhost:8000/api-docs |
 

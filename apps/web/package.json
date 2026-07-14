@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@repo/api-client": "workspace:^",
+    "@repo/backend-types": "workspace:^",
     "@repo/frontend-types": "workspace:*",
     "@repo/frontend-utils": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@tanstack/react-query": "^5",
     "@tanstack/react-table": "^8.21.3",
     "lucide-react": "^1.24.0",
     "next": "16.2.2",

@@ -11,6 +11,10 @@
       "persistent": true
     },
     "lint": {},
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "start": {
       "cache": false,
       "persistent": true

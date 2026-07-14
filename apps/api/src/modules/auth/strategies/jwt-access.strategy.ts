@@ -2,8 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { PrismaService } from '@repo/database';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import type { AccessTokenPayload, AuthenticatedUser } from '../types';
+import { extractAccessToken } from '../utils/jwt-extractors.util';
 import { flattenUserAccess, userAccessSelect } from '../utils/user-access.util';
 
 @Injectable()
@@ -13,7 +14,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     private readonly prisma: PrismaService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractAccessToken,
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('jwt.accessSecret'),
     });
@@ -25,7 +26,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       select: userAccessSelect,
     });
 
-    if (!user) {
+    if (!user || !user.isActive) {
       throw new UnauthorizedException();
     }
 

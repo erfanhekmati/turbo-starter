@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { generateOtpCode, hashOtp, verifyOtp as verifyOtpHash } from '@repo/backend-utils';
 import { OtpPurpose, PrismaService } from '@repo/database';
 import { TooManyRequestsException } from '../../../common/exceptions';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 
 @Injectable()
 export class OtpService {
@@ -12,7 +12,7 @@ export class OtpService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly emailService: EmailService,
+    private readonly mailQueue: MailQueueService,
   ) {}
 
   async requestOtp(email: string, purpose: OtpPurpose): Promise<void> {
@@ -78,13 +78,13 @@ export class OtpService {
     });
 
     try {
-      await this.emailService.sendOtpEmail(email, code, purpose);
+      await this.mailQueue.enqueueOtp(email, code, purpose);
     } catch (error) {
       await this.prisma.otpChallenge.delete({
         where: { email_purpose: { email, purpose } },
       });
       this.logger.error(
-        `Failed to send OTP email to ${email} for ${purpose}`,
+        `Failed to enqueue OTP email to ${email} for ${purpose}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;

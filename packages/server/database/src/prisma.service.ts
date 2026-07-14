@@ -36,6 +36,5 @@ export class PrismaService
 
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
-    await this.adapter.dispose();
   }
 }

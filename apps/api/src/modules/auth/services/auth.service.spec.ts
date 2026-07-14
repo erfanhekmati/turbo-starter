@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   BadRequestException,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,6 +12,7 @@ import { LoginLockoutService } from './login-lockout.service';
 import { OtpService } from './otp.service';
 import { PasswordHasherService } from './password-hasher.service';
 import { TokenService } from './token.service';
+import { TotpService } from './totp.service';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -24,7 +24,11 @@ describe('AuthService', () => {
     recordSuccess: jest.Mock;
   };
   let otpService: { requestOtp: jest.Mock; verifyOtp: jest.Mock };
-  let tokenService: { issueTokenPair: jest.Mock };
+  let totpService: { verifyForLogin: jest.Mock };
+  let tokenService: {
+    issueTokenPair: jest.Mock;
+    issueMfaToken: jest.Mock;
+  };
 
   const profile = {
     id: 'user-1',
@@ -33,18 +37,30 @@ describe('AuthService', () => {
     lastName: 'Doe',
     emailVerifiedAt: new Date('2026-01-01T00:00:00.000Z'),
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    isActive: true,
     roles: [RoleName.USER],
     permissions: ['users:read'],
+    totpEnabled: false,
   };
 
   const userWithPassword = {
     id: profile.id,
     email: profile.email,
     passwordHash: 'hashed-password',
+    isActive: true,
+    totpEnabledAt: null,
+    roles: [{ role: { name: RoleName.USER } }],
   };
 
   const userWithAccess = {
-    ...profile,
+    id: profile.id,
+    email: profile.email,
+    firstName: profile.firstName,
+    lastName: profile.lastName,
+    emailVerifiedAt: profile.emailVerifiedAt,
+    createdAt: profile.createdAt,
+    isActive: true,
+    totpEnabledAt: null,
     roles: [
       {
         role: {
@@ -64,7 +80,11 @@ describe('AuthService', () => {
       recordSuccess: jest.fn(),
     };
     otpService = { requestOtp: jest.fn(), verifyOtp: jest.fn() };
-    tokenService = { issueTokenPair: jest.fn() };
+    totpService = { verifyForLogin: jest.fn() };
+    tokenService = {
+      issueTokenPair: jest.fn(),
+      issueMfaToken: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -74,6 +94,7 @@ describe('AuthService', () => {
         { provide: LoginLockoutService, useValue: loginLockoutService },
         { provide: TokenService, useValue: tokenService },
         { provide: OtpService, useValue: otpService },
+        { provide: TotpService, useValue: totpService },
       ],
     }).compile();
 
@@ -92,9 +113,7 @@ describe('AuthService', () => {
     });
 
     it('records a failure and throws UnauthorizedException on a wrong password', async () => {
-      prisma.user.findUnique
-        .mockResolvedValueOnce(userWithPassword)
-        .mockResolvedValueOnce(userWithAccess);
+      prisma.user.findUnique.mockResolvedValueOnce(userWithPassword);
       passwordHasher.verify.mockResolvedValue(false);
 
       await expect(
@@ -121,11 +140,14 @@ describe('AuthService', () => {
       );
 
       expect(loginLockoutService.recordSuccess).toHaveBeenCalledWith(profile.id);
-      expect(result.tokens).toEqual({
-        accessToken: 'access',
-        refreshToken: 'refresh',
+      expect(result).toEqual({
+        requires2fa: false,
+        tokens: {
+          accessToken: 'access',
+          refreshToken: 'refresh',
+        },
+        user: profile,
       });
-      expect(result.user).toEqual(profile);
     });
   });
 

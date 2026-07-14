@@ -3,6 +3,10 @@ export interface AccessTokenPayload {
   email: string;
 }
 
+export interface MfaTokenPayload extends AccessTokenPayload {
+  type: 'mfa';
+}
+
 export interface RefreshTokenPayload {
   sub: string;
   jti: string;

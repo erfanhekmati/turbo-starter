@@ -1,16 +1,51 @@
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
+  id              String    @id @default(cuid())
+  email           String    @unique
   firstName       String
   lastName        String
-  passwordHash    String
-  emailVerifiedAt DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  passwordHash    String?
+  emailVerifiedAt DateTime?
+  isActive        Boolean   @default(true)
+  totpSecret      String?
+  totpEnabledAt   DateTime?
+  totpBackupCodes Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   refreshTokens RefreshToken[]
   loginLockout  LoginLockout?
   roles         UserRole[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+  accounts      OAuthAccount[]
+  files         FileObject[]
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model FileObject {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  bucket       String
+  mimeType     String
+  size         Int
+  originalName String
+  publicUrl    String?
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedById])
 }
 
 model Role {
@@ -50,6 +85,22 @@ model UserRole {
   role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 enum OtpPurpose {

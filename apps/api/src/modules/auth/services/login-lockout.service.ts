@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@repo/database';
 import { TooManyRequestsException } from '../../../common/exceptions';
-import { EmailService } from '../../email/email.service';
+import { MailQueueService } from '../../queue/mail-queue.service';
 
 @Injectable()
 export class LoginLockoutService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly emailService: EmailService,
+    private readonly mailQueue: MailQueueService,
   ) {}
 
   async assertNotLocked(userId: string): Promise<void> {
@@ -60,7 +60,7 @@ export class LoginLockoutService {
       });
 
       if (user) {
-        await this.emailService.sendAccountLockedEmail(
+        await this.mailQueue.enqueueAccountLocked(
           user.email,
           lockoutMinutes,
         );

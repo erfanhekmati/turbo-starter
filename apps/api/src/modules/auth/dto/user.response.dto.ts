@@ -27,6 +27,14 @@ export class UserResponseDto {
   @Expose()
   createdAt!: Date;
 
+  @ApiProperty()
+  @Expose()
+  isActive!: boolean;
+
+  @ApiProperty()
+  @Expose()
+  totpEnabled!: boolean;
+
   @ApiProperty({ type: [String] })
   @Expose()
   roles!: string[];

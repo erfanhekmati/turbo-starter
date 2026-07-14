@@ -7,6 +7,8 @@ export const userAccessSelect = {
   lastName: true,
   emailVerifiedAt: true,
   createdAt: true,
+  isActive: true,
+  totpEnabledAt: true,
   roles: {
     select: {
       role: {
@@ -29,9 +31,13 @@ export type UserWithAccessRelations = Prisma.UserGetPayload<{
   select: typeof userAccessSelect;
 }>;
 
-export type UserProfile = Omit<UserWithAccessRelations, 'roles'> & {
+export type UserProfile = Omit<
+  UserWithAccessRelations,
+  'roles' | 'totpEnabledAt'
+> & {
   roles: string[];
   permissions: string[];
+  totpEnabled: boolean;
 };
 
 export function flattenUserAccess(
@@ -48,11 +54,12 @@ export function flattenUserAccess(
     ),
   ];
 
-  const { roles: _roles, ...profile } = user;
+  const { roles: _roles, totpEnabledAt, ...profile } = user;
 
   return {
     ...profile,
     roles,
     permissions,
+    totpEnabled: Boolean(totpEnabledAt),
   };
 }

@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { createWinstonLogger } from '../logger';
 import { setupSwagger } from '../swagger';
@@ -11,12 +12,16 @@ export function configureApp(app: INestApplication): ConfigService {
 
   app.useLogger(createWinstonLogger(isProduction));
   app.use(helmet());
+  app.use(cookieParser());
 
   const corsOrigins = configService.get<string[]>('app.corsOrigins');
   if (isProduction && (!corsOrigins || corsOrigins.length === 0)) {
     throw new Error('CORS_ORIGINS must be set in production');
   }
-  app.enableCors({ origin: corsOrigins ?? true });
+  app.enableCors({
+    origin: corsOrigins?.length ? corsOrigins : true,
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

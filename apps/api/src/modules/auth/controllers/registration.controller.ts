@@ -1,6 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { Public } from '../../../common/decorators';
 import {
   AuthTokensResponseDto,
@@ -10,14 +18,17 @@ import {
   RegistrationSessionResponseDto,
   toUserResponseDto,
 } from '../dto';
-import { RegistrationService } from '../services';
+import { CookieService, RegistrationService } from '../services';
 
 @ApiTags('auth/register')
 @Controller('auth/register')
 @Public()
 @Throttle({ default: { limit: 5, ttl: 60_000 } })
 export class RegistrationController {
-  constructor(private readonly registrationService: RegistrationService) {}
+  constructor(
+    private readonly registrationService: RegistrationService,
+    private readonly cookieService: CookieService,
+  ) {}
 
   @Post('start')
   @HttpCode(HttpStatus.OK)
@@ -47,6 +58,7 @@ export class RegistrationController {
   @ApiOperation({ summary: 'Complete registration and issue tokens' })
   async complete(
     @Body() dto: RegisterCompleteDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthTokensResponseDto> {
     const { tokens, user } = await this.registrationService.complete(
       dto.registrationId,
@@ -54,6 +66,8 @@ export class RegistrationController {
       dto.lastName,
       dto.password,
     );
+
+    this.cookieService.setAuthCookies(res, tokens);
 
     return {
       ...tokens,

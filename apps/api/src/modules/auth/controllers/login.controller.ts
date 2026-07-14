@@ -1,34 +1,78 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
 import { Public } from '../../../common/decorators';
 import {
   AuthTokensResponseDto,
+  Login2faDto,
   LoginOtpStartDto,
   LoginOtpVerifyDto,
   LoginPasswordDto,
+  LoginPasswordResponseDto,
   MessageResponseDto,
   toUserResponseDto,
 } from '../dto';
-import { AuthService } from '../services';
+import { AuthService, CookieService } from '../services';
 
 @ApiTags('auth/login')
 @Controller('auth/login')
 @Public()
 @Throttle({ default: { limit: 5, ttl: 60_000 } })
 export class LoginController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cookieService: CookieService,
+  ) {}
 
   @Post('password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with email and password' })
   async loginWithPassword(
     @Body() dto: LoginPasswordDto,
-  ): Promise<AuthTokensResponseDto> {
-    const { tokens, user } = await this.authService.loginWithPassword(
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginPasswordResponseDto> {
+    const result = await this.authService.loginWithPassword(
       dto.email,
       dto.password,
     );
+
+    if (result.requires2fa) {
+      return {
+        requires2fa: true,
+        mfaToken: result.mfaToken,
+      };
+    }
+
+    this.cookieService.setAuthCookies(res, result.tokens);
+
+    return {
+      ...result.tokens,
+      user: toUserResponseDto(result.user),
+      requires2fa: false,
+    };
+  }
+
+  @Post('2fa')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete sign in with TOTP verification' })
+  async loginWith2fa(
+    @Body() dto: Login2faDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthTokensResponseDto> {
+    const { tokens, user } = await this.authService.loginWith2fa(
+      dto.mfaToken,
+      dto.code,
+    );
+
+    this.cookieService.setAuthCookies(res, tokens);
 
     return {
       ...tokens,
@@ -54,11 +98,14 @@ export class LoginController {
   @ApiOperation({ summary: 'Verify a one-time login code' })
   async verifyOtpLogin(
     @Body() dto: LoginOtpVerifyDto,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthTokensResponseDto> {
     const { tokens, user } = await this.authService.verifyOtpLogin(
       dto.email,
       dto.code,
     );
+
+    this.cookieService.setAuthCookies(res, tokens);
 
     return {
       ...tokens,
