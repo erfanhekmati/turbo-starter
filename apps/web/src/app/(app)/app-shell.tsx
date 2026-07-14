@@ -75,6 +75,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link href="/dashboard">Turbo Starter</Link>
             ) : undefined
           }
+          links={
+            <AppBreadcrumbs
+              items={breadcrumbItems}
+              renderLink={(item, label) => (
+                <Link href={item.href}>{label}</Link>
+              )}
+            />
+          }
           actions={
             user ? (
               <ProfileMenu
@@ -88,15 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         />
         <main className="min-h-0 flex-1">
           <ScrollArea className="h-full">
-            <div className="space-y-6 p-6">
-              <AppBreadcrumbs
-                items={breadcrumbItems}
-                renderLink={(item, label) => (
-                  <Link href={item.href}>{label}</Link>
-                )}
-              />
-              {children}
-            </div>
+            <div className="space-y-6 p-6">{children}</div>
           </ScrollArea>
         </main>
       </div>
