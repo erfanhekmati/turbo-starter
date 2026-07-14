@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { PanelLeftCloseIcon, PanelLeftIcon } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 import { Button } from "../ui/button"
@@ -101,12 +101,12 @@ function SidebarCollapseToggle({
       aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       aria-expanded={!collapsed}
       onClick={() => onCollapsedChange(!collapsed)}
-      className={className}
+      className={cn("cursor-pointer", className)}
     >
       {collapsed ? (
-        <PanelLeftIcon className="size-4" />
+        <ChevronRightIcon className="size-4" />
       ) : (
-        <PanelLeftCloseIcon className="size-4" />
+        <ChevronLeftIcon className="size-4" />
       )}
     </Button>
   )
