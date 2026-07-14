@@ -54,11 +54,12 @@ function ProfileMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+      <DropdownMenuTrigger className="flex items-center gap-2 outline-none">
         <Avatar>
           <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
+        <span className="hidden text-sm font-medium sm:inline">{name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col gap-1.5">
