@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@repo/backend-types": "workspace:*",
+    "axios": "^1.18.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
