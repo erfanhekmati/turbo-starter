@@ -119,7 +119,12 @@ export function LoginForm() {
 
       {mode === 'password' ? (
         <>
-          <Button type="button" variant="outline" className="w-full" asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-background dark:bg-background"
+            asChild
+          >
             <a href={getApiClient().auth.getGoogleOAuthUrl()}>
               <GoogleIcon className="mr-2 size-4" />
               Continue with Google
@@ -149,7 +154,12 @@ export function LoginForm() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" autoComplete="email" {...field} />
+                      <Input
+                        type="email"
+                        autoComplete="email"
+                        placeholder="Enter your email"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -165,6 +175,7 @@ export function LoginForm() {
                       <Input
                         type="password"
                         autoComplete="current-password"
+                        placeholder="Enter your password"
                         {...field}
                       />
                     </FormControl>

@@ -119,7 +119,12 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" autoComplete="email" {...field} />
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      placeholder="Enter your email"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -177,7 +182,11 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>First name</FormLabel>
                   <FormControl>
-                    <Input autoComplete="given-name" {...field} />
+                    <Input
+                      autoComplete="given-name"
+                      placeholder="Enter your first name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -190,7 +199,11 @@ export function RegisterForm() {
                 <FormItem>
                   <FormLabel>Last name</FormLabel>
                   <FormControl>
-                    <Input autoComplete="family-name" {...field} />
+                    <Input
+                      autoComplete="family-name"
+                      placeholder="Enter your last name"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -206,6 +219,7 @@ export function RegisterForm() {
                     <Input
                       type="password"
                       autoComplete="new-password"
+                      placeholder="Enter your password"
                       {...field}
                     />
                   </FormControl>
@@ -223,6 +237,7 @@ export function RegisterForm() {
                     <Input
                       type="password"
                       autoComplete="new-password"
+                      placeholder="Confirm your password"
                       {...field}
                     />
                   </FormControl>
