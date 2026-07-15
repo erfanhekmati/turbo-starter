@@ -34,7 +34,6 @@ export class RegistrationService {
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
-      // Opaque id — same response shape, no OTP sent (anti-enumeration)
       return randomUUID();
     }
 

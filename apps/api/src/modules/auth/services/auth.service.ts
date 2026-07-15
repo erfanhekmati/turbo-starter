@@ -104,7 +104,6 @@ export class AuthService {
     try {
       await this.loginLockoutService.assertNotLocked(user.id);
     } catch {
-      // Same silent response as unknown emails (anti-enumeration)
       return;
     }
 

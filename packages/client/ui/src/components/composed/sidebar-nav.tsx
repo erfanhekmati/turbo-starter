@@ -54,9 +54,7 @@ function useSidebarCollapsed({
       const stored = window.localStorage.getItem(storageKey);
       if (stored === "true") setUncontrolled(true);
       if (stored === "false") setUncontrolled(false);
-    } catch {
-      // ignore storage errors
-    }
+    } catch {}
   }, [isControlled, storageKey]);
 
   const collapsed = isControlled ? collapsedProp : uncontrolled;
@@ -67,9 +65,7 @@ function useSidebarCollapsed({
       if (storageKey) {
         try {
           window.localStorage.setItem(storageKey, String(next));
-        } catch {
-          // ignore storage errors
-        }
+        } catch {}
       }
     }
     onCollapsedChange?.(next);

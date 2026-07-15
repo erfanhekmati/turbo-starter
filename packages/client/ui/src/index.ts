@@ -1,8 +1,6 @@
-// lib
 export { cn } from "./lib/utils"
 export { toast } from "./lib/toast"
 
-// primitives
 export * from "./components/ui/button"
 export * from "./components/ui/floating-action-button"
 export * from "./components/ui/input"
@@ -41,7 +39,6 @@ export * from "./components/ui/scroll-area"
 
 export * from "./components/theme-provider"
 
-// composed
 export * from "./components/composed/confirmation-dialog"
 export * from "./components/composed/delete-dialog"
 export * from "./components/composed/form-dialog"

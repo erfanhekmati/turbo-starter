@@ -34,9 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function handleLogout() {
     try {
       await getApiClient().auth.logout();
-    } catch {
-      // ignore and continue clearing the local session
-    }
+    } catch {}
 
     toast.success('Signed out');
     router.replace('/login');

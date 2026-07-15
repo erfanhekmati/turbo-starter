@@ -26,7 +26,6 @@ import { UsersModule } from './modules/users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      // Turbo runs the API with cwd=apps/api; root .env lives two levels up.
       envFilePath: [
         path.resolve(process.cwd(), '.env'),
         path.resolve(process.cwd(), '../../.env'),
